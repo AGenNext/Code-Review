@@ -445,25 +445,86 @@ hey -n 1000 -c 100 https://code-reviewer-xxxxxxxx-uc.a.run.app/healthz
 
 ## Cost Optimization
 
-### Estimate Costs
+### Accurate Cost Estimates
 
+**Google Cloud Run Pricing (2024):**
+- vCPU: $0.00002400 per vCPU-second
+- Memory: $0.00000250 per GB-second
+- Free tier: 2M requests, 360K GB-seconds, 180K vCPU-seconds/month
+
+**Development Configuration (Min instances = 0):**
 ```
-Cloud Run: ~$0.00002 per vCPU-second
-- CodeReviewer: 2 vCPU @ 80% usage ~$50/month
-- Landing: 1 vCPU @ 10% usage ~$5/month
+CodeReviewer: 1 CPU, 512Mi, 10% usage   ~$20/month
+Landing:      1 CPU, 256Mi, 5% usage    ~$2/month
+Container Registry:                     ~$0.10/month
+Total: ~$22/month
 
-Container Registry: $0.10/GB/month
-- ~1GB storage = $0.10/month
-
-Total: ~$60/month baseline
+Calculation:
+- 2,592,000 seconds/month (30 days)
+- 10% active = 259,200 seconds
+- 1 vCPU × 259,200 × $0.00002400 = $6.22
+- 0.5 GB × 259,200 × $0.00000250 = $0.32
 ```
 
-### Reduce Costs
+**Production Configuration (Min instances = 1):**
+```
+CodeReviewer: 2 CPU, 1Gi, 80% usage    ~$105/month
+Landing:      1 CPU, 256Mi, 10% usage  ~$6/month
+Container Registry:                    ~$0.10/month
+Total: ~$111/month
 
-1. **Lower CPU allocation:** 1 vCPU instead of 2
-2. **Reduce memory:** 512Mi for CodeReviewer
-3. **Set min instances to 0** (cold start delays)
-4. **Use spot pricing** (Preemptible VMs)
+Calculation:
+- 2,592,000 seconds/month
+- 80% active = 2,073,600 seconds
+- 2 vCPU × 2,073,600 × $0.00002400 = $99.54
+- 1 GB × 2,073,600 × $0.00000250 = $5.18
+```
+
+**Enterprise Configuration (High traffic):**
+```
+CodeReviewer: 4 CPU, 2Gi, 90% usage    ~$420/month
+Landing:      2 CPU, 512Mi, 50% usage  ~$60/month
+Database (Cloud SQL):                  ~$100+/month
+Total: ~$580+/month
+```
+
+**Free Tier Coverage:**
+- May cover low-traffic apps entirely
+- 2M requests/month = ~67k requests/day
+- Check usage: `gcloud billing accounts list`
+
+### Cost Reduction Strategies
+
+**Immediate savings:**
+```bash
+# Lower CPU (saves ~$50/month)
+gcloud run services update code-reviewer --cpu=1
+
+# Lower memory (saves ~$25/month)
+gcloud run services update code-reviewer --memory=512Mi
+
+# Set min instances to 0 (no idle cost, cold starts only)
+gcloud run services update code-reviewer --min-instances=0
+
+# Result with these changes: ~$20/month development cost
+```
+
+**Monitoring costs:**
+```bash
+# Check current spending
+gcloud billing accounts list
+gcloud compute project-info describe --project=$PROJECT_ID
+
+# Set up budget alerts
+gcloud billing budgets create --billing-account=BILLING_ACCOUNT_ID
+```
+
+**Long-term optimization:**
+1. Use committed use discounts (3-year: 25% discount)
+2. Use Compute Engine instead of Cloud Run for stable workloads
+3. Implement aggressive caching
+4. Use CDN for static content (landing page)
+5. Schedule lower instances during off-hours
 
 ## Cleanup
 
@@ -502,6 +563,7 @@ gcloud secrets delete code-reviewer-claude-key
 - Cloud Run: https://cloud.google.com/run/docs
 - Cloud Build: https://cloud.google.com/build/docs
 - Container Registry: https://cloud.google.com/container-registry/docs
+- Pricing: https://cloud.google.com/run/pricing
 
 **Key Files:**
 - `Dockerfile.cloudrun` - Cloud Run Dockerfile

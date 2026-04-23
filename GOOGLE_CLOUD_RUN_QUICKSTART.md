@@ -277,7 +277,7 @@ gcloud run services describe code-reviewer \
 - CodeReviewer: ~$50 (2 CPU @ 80% usage)
 - Landing Page: ~$5 (1 CPU @ 10% usage)
 - Storage: ~$0.10 (images in registry)
-- **Total: ~$55/month**
+- **Total: ~$111/month (production) or ~$22/month (development)**
 
 **Reduce Costs:**
 ```bash
