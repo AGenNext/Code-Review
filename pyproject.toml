@@ -18,5 +18,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.2.0", "httpx>=0.27.0"]
 
+[tool.setuptools.package-data]
+codereviewer = ["web/static/*.svg"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
