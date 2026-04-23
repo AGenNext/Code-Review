@@ -102,6 +102,64 @@ def models(provider: Provider | None = None):
     return runtime_service.list_models(provider)
 
 
+@app.get("/api/config")
+def frontend_config(identity: IdentityContext = Depends(get_identity_context)) -> dict:
+    sso = load_sso_config()
+    profiles = runtime_service.list_profiles(tenant_id=identity.tenant_id)
+    model_catalog = runtime_service.list_models()
+
+    return {
+        "identity": {
+            "tenant_id": identity.tenant_id,
+            "agent_id": identity.agent_id,
+        },
+        "runtime": {
+            "providers": [p.value for p in Provider],
+            "models": [model.model_dump(mode="json") for model in model_catalog],
+            "profiles": [
+                {
+                    "id": profile.id,
+                    "name": profile.name,
+                    "provider": profile.provider.value,
+                    "model_id": profile.model_id,
+                    "is_default": profile.is_default,
+                    "temperature": profile.temperature,
+                    "max_tokens": profile.max_tokens,
+                }
+                for profile in profiles
+            ],
+        },
+        "integrations": {
+            "claude_agent_sdk": {
+                "enabled": _is_enabled(os.getenv("CLAUDE_AGENT_SDK_ENABLED")),
+                "strict": _is_enabled(os.getenv("CLAUDE_AGENT_SDK_STRICT")),
+                "default_model": os.getenv("CLAUDE_AGENT_SDK_MODEL", "claude-sonnet-4"),
+                "api_key_configured": bool(os.getenv("CLAUDE_API_KEY")),
+            },
+            "litellm": {
+                "enabled": _is_enabled(os.getenv("LITELLM_ENABLED")),
+                "base_url": os.getenv("LITELLM_BASE_URL", "http://localhost:4000"),
+                "model": os.getenv("LITELLM_MODEL", "anthropic/claude-sonnet-4"),
+                "api_key_configured": bool(os.getenv("LITELLM_API_KEY")),
+            },
+            "notifications": {
+                "enabled": notification_service.enabled,
+                "channels": sorted(notification_service.channels),
+                "smtp_configured": bool(notification_service.smtp_host and notification_service.smtp_from and notification_service.smtp_to),
+                "smtp_host": notification_service.smtp_host or None,
+                "smtp_from_configured": bool(notification_service.smtp_from),
+                "smtp_to_count": len(notification_service.smtp_to),
+            },
+            "observability": {
+                "signoz_enabled": _is_enabled(os.getenv("SIGNOZ_ENABLED")),
+                "service_name": os.getenv("SIGNOZ_SERVICE_NAME", "code-reviewer"),
+                "traces_endpoint": os.getenv("SIGNOZ_OTLP_TRACES_ENDPOINT", "http://localhost:4318/v1/traces"),
+            },
+            "sso": sso.model_dump(mode="json"),
+        },
+    }
+
+
 @app.get("/api/runtime-profiles")
 def list_runtime_profiles(identity: IdentityContext = Depends(get_identity_context)) -> list[RuntimeProfile]:
     return runtime_service.list_profiles(tenant_id=identity.tenant_id)

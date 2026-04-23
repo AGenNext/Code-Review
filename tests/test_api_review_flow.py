@@ -130,3 +130,35 @@ def test_agent_identity_maps_to_tenant_namespace() -> None:
     ).json()
     assert review["tenant_id"] == "agent:vscode-agent-1"
     assert review["agent_id"] == "vscode-agent-1"
+
+
+def test_frontend_config_exposes_safe_runtime_config(monkeypatch) -> None:
+    monkeypatch.setenv("CLAUDE_API_KEY", "sk-ant-secret")
+    monkeypatch.setenv("SSO_ENABLED", "true")
+    monkeypatch.setenv("SSO_CLIENT_SECRET", "sso-secret")
+
+    client = TestClient(app)
+    headers = {"X-Tenant-ID": "frontend-config-test"}
+    profile = client.post(
+        "/api/runtime-profiles",
+        headers=headers,
+        json={
+            "name": "frontend-default",
+            "provider": "anthropic",
+            "model_id": "claude-sonnet-4",
+            "auth_reference": "local-key",
+            "is_default": True,
+        },
+    ).json()
+
+    response = client.get("/api/config", headers=headers)
+    assert response.status_code == 200
+    config = response.json()
+
+    assert config["identity"]["tenant_id"] == "frontend-config-test"
+    assert any(item["id"] == profile["id"] for item in config["runtime"]["profiles"])
+    assert any(item["model_id"] == "claude-sonnet-4" for item in config["runtime"]["models"])
+    assert config["integrations"]["claude_agent_sdk"]["api_key_configured"] is True
+    assert config["integrations"]["sso"]["client_secret_configured"] is True
+    assert "sk-ant-secret" not in response.text
+    assert "sso-secret" not in response.text
