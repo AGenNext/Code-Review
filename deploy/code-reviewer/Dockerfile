@@ -6,23 +6,33 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install build essentials (required for some packages)
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
-
-# Copy and install in editable mode
+# Copy project files
 COPY pyproject.toml README.md ./
 COPY src ./src
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install -e . 2>&1 | tail -5 || true
 
-# Create non-root user
-RUN useradd --create-home --uid 10001 appuser && mkdir -p /data && chown -R appuser:appuser /app /data
+# Install with retry logic for network resilience
+RUN pip install --upgrade pip && \
+    pip install --retries 5 \
+    'fastapi>=0.115.0' \
+    'uvicorn>=0.30.0' \
+    'pydantic>=2.8.0' \
+    'anthropic>=0.39.0' \
+    'opentelemetry-api>=1.29.0' \
+    'opentelemetry-sdk>=1.29.0' \
+    'opentelemetry-exporter-otlp-proto-http>=1.29.0' \
+    'opentelemetry-instrumentation-fastapi>=0.50b0' || \
+    pip install -e .
+
+# Create non-root user and data directory
+RUN useradd --create-home --uid 10001 appuser && \
+    mkdir -p /data && \
+    chown -R appuser:appuser /app /data
 
 USER appuser
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.getenv(\"PORT\", \"8000\")}/healthz', timeout=3).read()"
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).read()" || exit 1
 
 CMD ["python", "-m", "codereviewer.main"]
