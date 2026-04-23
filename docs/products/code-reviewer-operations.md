@@ -13,6 +13,10 @@
 - `GET /api/reviews`
 - `GET /api/reviews/{job_id}`
 
+## Surface operations reality
+- Operated surface now: AgentNxt CodeReviewer Web / Cloud.
+- Non-web surfaces are not yet operable runtime deployments; they are scaffolded/planned integration tracks.
+
 ## Hardening checklist
 - Replace in-memory repositories with persistent datastore.
 - Integrate official Claude Agent SDK runtime pipeline.
