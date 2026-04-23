@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  code-reviewer:
+    build:
+      context: .
+      dockerfile: deploy/code-reviewer/Dockerfile
+    env_file:
+      - deploy/code-reviewer/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - codereviewer-data:/data
+      - ./src:/app/src
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - CODEREVIEWER_DB_PATH=/data/codereviewer.db
+      - CLAUDE_AGENT_SDK_ENABLED=false
+    command: python -m codereviewer.main
+
+volumes:
+  codereviewer-data:
