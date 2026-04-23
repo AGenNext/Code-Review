@@ -1,0 +1,81 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: code-reviewer
+  namespace: default
+  labels:
+    cloud.googleapis.com/location: us-central1
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '100'
+        autoscaling.knative.dev/minScale: '1'
+    spec:
+      serviceAccountName: code-reviewer-sa
+      containers:
+      - image: gcr.io/PROJECT_ID/code-reviewer:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: '8080'
+        - name: HOST
+          value: '0.0.0.0'
+        - name: CODEREVIEWER_DB_PATH
+          value: '/tmp/codereviewer.db'
+        - name: CLAUDE_AGENT_SDK_ENABLED
+          value: 'true'
+        - name: CLAUDE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: code-reviewer-secrets
+              key: claude-api-key
+        - name: SIGNOZ_ENABLED
+          value: 'false'
+        resources:
+          requests:
+            memory: '512Mi'
+            cpu: '250m'
+          limits:
+            memory: '1Gi'
+            cpu: '1000m'
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+  traffic:
+  - percent: 100
+    latestRevision: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-reviewer-service
+  namespace: default
+  labels:
+    app: code-reviewer
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: code-reviewer
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: code-reviewer-sa
+  namespace: default

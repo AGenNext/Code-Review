@@ -1,0 +1,36 @@
+steps:
+  # Build CodeReviewer image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'Dockerfile.cloudrun'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/code-reviewer:$SHORT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/code-reviewer:latest'
+      - '.'
+
+  # Push CodeReviewer to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/code-reviewer:$SHORT_SHA'
+
+  # Deploy CodeReviewer to Cloud Run
+  - name: 'gcr.io/cloud-builders/gke-deploy'
+    args:
+      - 'run'
+      - '--filename=.'
+      - '--image=gcr.io/$PROJECT_ID/code-reviewer:$SHORT_SHA'
+      - '--location=us-central1'
+      - '--output=/workspace/output'
+
+images:
+  - 'gcr.io/$PROJECT_ID/code-reviewer:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/code-reviewer:latest'
+
+timeout: '1800s'
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
