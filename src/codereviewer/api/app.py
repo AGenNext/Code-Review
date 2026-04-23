@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 from codereviewer.core.models import MemoryRecord, Provider, ReviewFeedbackEvent, ReviewJob, RuntimeProfile
 from codereviewer.infra.repositories import (
@@ -14,9 +17,13 @@ from codereviewer.services.context_budget import ContextBudgetManager
 from codereviewer.services.feedback_service import FeedbackService
 from codereviewer.services.review_service import ReviewService
 from codereviewer.services.runtime_service import RuntimeProfileService
+from codereviewer.web.landing import LANDING_HTML
 from codereviewer.web.ui import INDEX_HTML
 
 app = FastAPI(title="CodeReviewer")
+
+static_dir = Path(__file__).resolve().parent.parent / "web" / "static"
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 storage = SQLiteRepository()
 job_repo = ReviewJobRepository(storage)
@@ -29,6 +36,11 @@ feedback_service = FeedbackService(feedback_repo)
 
 
 @app.get("/", response_class=HTMLResponse)
+def landing() -> str:
+    return LANDING_HTML
+
+
+@app.get("/app", response_class=HTMLResponse)
 def ui() -> str:
     return INDEX_HTML
 

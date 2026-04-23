@@ -28,3 +28,9 @@
 - Add queue workers and timeout/cancellation execution controls.
 - Add auth, rate limits, and audit logs.
 - Add backup/restore and migration process docs.
+
+
+## CI/CD operations
+- Baseline CI workflow: `.github/workflows/ci.yml`.
+- CI runs `pytest -q`, package build (`python -m build`), and Docker build validation.
+- Local command parity is documented in `docs/products/code-reviewer-cicd.md`.

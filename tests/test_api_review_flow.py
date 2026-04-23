@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("httpx")
+
 from fastapi.testclient import TestClient
 
 from codereviewer.api.app import app

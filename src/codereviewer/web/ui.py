@@ -1,10 +1,22 @@
 INDEX_HTML = """
 <!doctype html>
-<html>
-<head><title>CodeReviewer Web</title></head>
-<body style=\"font-family: sans-serif; margin: 2rem;\">
-  <h1>CodeReviewer Web</h1>
-  <p>Implemented surface for review submission, history, runtime profiles, and feedback visibility.</p>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <title>CodeReviewer Web Console</title>
+  <link rel=\"icon\" href=\"/static/favicon.svg\" type=\"image/svg+xml\" />
+</head>
+<body style=\"font-family: Inter, Arial, sans-serif; margin: 2rem; line-height: 1.4;\">
+  <header style=\"display:flex; align-items:center; gap:0.75rem; margin-bottom: 1rem;\">
+    <img src=\"/static/logo.svg\" alt=\"CodeReviewer logo\" style=\"width:40px;height:40px\" />
+    <div>
+      <h1 style=\"margin:0;\">CodeReviewer Web Console</h1>
+      <p style=\"margin:0.25rem 0 0 0; color:#444;\">Implemented surface for runtime profile management, review submission, and history visibility.</p>
+    </div>
+  </header>
+
+  <p><a href=\"/\">Back to CodeReviewer landing page</a></p>
 
   <h2>Runtime Profile</h2>
   <form id=\"profile-form\">
