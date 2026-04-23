@@ -1,0 +1,8 @@
+version: '3.9'
+services:
+  code-reviewer:
+    build:
+      context: ../..
+      dockerfile: deploy/code-reviewer/Dockerfile
+    ports:
+      - "8000:8000"
