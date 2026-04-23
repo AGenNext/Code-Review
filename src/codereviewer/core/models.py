@@ -60,6 +60,7 @@ class ProviderConfiguration(BaseModel):
 
 class RuntimeProfile(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
+    tenant_id: str = "default"
     name: str
     provider: Provider
     model_id: str
@@ -116,6 +117,8 @@ class ReviewJobStatus(str, Enum):
 
 class ReviewJob(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
+    tenant_id: str = "default"
+    agent_id: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     queued_at: datetime | None = None
     started_at: datetime | None = None
@@ -132,6 +135,8 @@ class ReviewJob(BaseModel):
 
 class ReviewFeedbackEvent(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
+    tenant_id: str = "default"
+    agent_id: str | None = None
     review_job_id: str
     finding_id: str | None = None
     feedback_type: ReviewFeedbackType
@@ -141,6 +146,8 @@ class ReviewFeedbackEvent(BaseModel):
 
 class MemoryRecord(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
+    tenant_id: str = "default"
+    agent_id: str | None = None
     repository_name: str
     memory_type: Literal["review_history", "workspace"]
     key: str

@@ -4,5 +4,12 @@ services:
     build:
       context: ../..
       dockerfile: deploy/code-reviewer/Dockerfile
+    env_file:
+      - .env
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:${PORT:-8000}"
+    volumes:
+      - codereviewer-data:/data
+
+volumes:
+  codereviewer-data:

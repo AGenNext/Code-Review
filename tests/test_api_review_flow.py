@@ -67,3 +67,66 @@ def test_feedback_roundtrip() -> None:
     assert created.status_code == 200
     items = client.get("/api/feedback").json()
     assert any(item["review_job_id"] == "job-1" for item in items)
+
+
+def test_multitenant_review_isolation_by_header() -> None:
+    client = TestClient(app)
+    tenant_a = {"X-Tenant-ID": "tenant-a"}
+    tenant_b = {"X-Tenant-ID": "tenant-b"}
+
+    profile = client.post(
+        "/api/runtime-profiles",
+        headers=tenant_a,
+        json={
+            "name": "tenant-a-default",
+            "provider": "anthropic",
+            "model_id": "claude-sonnet-4",
+            "auth_reference": "local-key",
+            "is_default": True,
+        },
+    ).json()
+
+    review = client.post(
+        "/api/reviews",
+        headers=tenant_a,
+        json={
+            "repository": {"name": "demo-a", "branch": "main"},
+            "runtime_profile_id": profile["id"],
+            "changes": [{"path": "a.py", "change_type": "modified", "patch": "@@\n+# TODO tenant a"}],
+        },
+    ).json()
+
+    assert client.get("/api/reviews", headers=tenant_a).status_code == 200
+    assert any(item["id"] == review["id"] for item in client.get("/api/reviews", headers=tenant_a).json())
+    assert all(item["id"] != review["id"] for item in client.get("/api/reviews", headers=tenant_b).json())
+    assert client.get(f"/api/reviews/{review['id']}", headers=tenant_b).status_code == 404
+
+
+def test_agent_identity_maps_to_tenant_namespace() -> None:
+    client = TestClient(app)
+    agent_headers = {"X-Agent-ID": "vscode-agent-1"}
+
+    profile = client.post(
+        "/api/runtime-profiles",
+        headers=agent_headers,
+        json={
+            "name": "agent-default",
+            "provider": "anthropic",
+            "model_id": "claude-sonnet-4",
+            "auth_reference": "local-key",
+            "is_default": False,
+        },
+    ).json()
+    assert profile["tenant_id"] == "agent:vscode-agent-1"
+
+    review = client.post(
+        "/api/reviews",
+        headers=agent_headers,
+        json={
+            "repository": {"name": "demo-agent", "branch": "main"},
+            "runtime_profile_id": profile["id"],
+            "changes": [{"path": "x.py", "change_type": "modified", "patch": "@@\n+# TODO agent path"}],
+        },
+    ).json()
+    assert review["tenant_id"] == "agent:vscode-agent-1"
+    assert review["agent_id"] == "vscode-agent-1"

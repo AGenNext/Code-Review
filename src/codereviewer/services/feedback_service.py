@@ -11,5 +11,5 @@ class FeedbackService:
     def record(self, event: ReviewFeedbackEvent) -> ReviewFeedbackEvent:
         return self.repo.save(event)
 
-    def list(self, review_job_id: str | None = None) -> list[ReviewFeedbackEvent]:
-        return self.repo.list(review_job_id=review_job_id)
+    def list(self, review_job_id: str | None = None, tenant_id: str | None = None) -> list[ReviewFeedbackEvent]:
+        return self.repo.list(review_job_id=review_job_id, tenant_id=tenant_id)

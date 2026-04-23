@@ -13,16 +13,14 @@ class RuntimeProfileService:
     def __init__(self, repo: RuntimeProfileRepository) -> None:
         self.repo = repo
 
-    def create_profile(self, profile: RuntimeProfile) -> RuntimeProfile:
+    def create_profile(self, profile: RuntimeProfile, tenant_id: str | None = None) -> RuntimeProfile:
+        if tenant_id:
+            profile.tenant_id = tenant_id
         self._validate(profile)
-        if profile.is_default:
-            for existing in self.repo.list():
-                existing.is_default = False
-                self.repo.save(existing)
         return self.repo.save(profile)
 
-    def list_profiles(self) -> list[RuntimeProfile]:
-        return self.repo.list()
+    def list_profiles(self, tenant_id: str | None = None) -> list[RuntimeProfile]:
+        return self.repo.list(tenant_id=tenant_id)
 
     def list_models(self, provider: Provider | None = None) -> list[ModelConfiguration]:
         if provider is None:

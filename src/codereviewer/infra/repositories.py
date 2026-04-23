@@ -67,15 +67,23 @@ class ReviewJobRepository:
             )
         return job
 
-    def get(self, job_id: str) -> ReviewJob | None:
+    def get(self, job_id: str, tenant_id: str | None = None) -> ReviewJob | None:
         with self.storage._connect() as con:
             row = con.execute("SELECT data FROM review_jobs WHERE id = ?", (job_id,)).fetchone()
-        return ReviewJob.model_validate(json.loads(row[0])) if row else None
+        if not row:
+            return None
+        job = ReviewJob.model_validate(json.loads(row[0]))
+        if tenant_id and job.tenant_id != tenant_id:
+            return None
+        return job
 
-    def list(self) -> Iterable[ReviewJob]:
+    def list(self, tenant_id: str | None = None) -> Iterable[ReviewJob]:
         with self.storage._connect() as con:
             rows = con.execute("SELECT data FROM review_jobs ORDER BY rowid DESC").fetchall()
-        return [ReviewJob.model_validate(json.loads(row[0])) for row in rows]
+        jobs = [ReviewJob.model_validate(json.loads(row[0])) for row in rows]
+        if tenant_id is None:
+            return jobs
+        return [job for job in jobs if job.tenant_id == tenant_id]
 
 
 class RuntimeProfileRepository:
@@ -88,6 +96,8 @@ class RuntimeProfileRepository:
                 rows = con.execute("SELECT id, data FROM runtime_profiles").fetchall()
                 for profile_id, raw in rows:
                     loaded = RuntimeProfile.model_validate(json.loads(raw))
+                    if loaded.tenant_id != profile.tenant_id:
+                        continue
                     loaded.is_default = False
                     con.execute(
                         "INSERT OR REPLACE INTO runtime_profiles (id, data) VALUES (?, ?)",
@@ -99,15 +109,23 @@ class RuntimeProfileRepository:
             )
         return profile
 
-    def get(self, profile_id: str) -> RuntimeProfile | None:
+    def get(self, profile_id: str, tenant_id: str | None = None) -> RuntimeProfile | None:
         with self.storage._connect() as con:
             row = con.execute("SELECT data FROM runtime_profiles WHERE id = ?", (profile_id,)).fetchone()
-        return RuntimeProfile.model_validate(json.loads(row[0])) if row else None
+        if not row:
+            return None
+        profile = RuntimeProfile.model_validate(json.loads(row[0]))
+        if tenant_id and profile.tenant_id != tenant_id:
+            return None
+        return profile
 
-    def list(self) -> list[RuntimeProfile]:
+    def list(self, tenant_id: str | None = None) -> list[RuntimeProfile]:
         with self.storage._connect() as con:
             rows = con.execute("SELECT data FROM runtime_profiles ORDER BY rowid DESC").fetchall()
-        return [RuntimeProfile.model_validate(json.loads(row[0])) for row in rows]
+        profiles = [RuntimeProfile.model_validate(json.loads(row[0])) for row in rows]
+        if tenant_id is None:
+            return profiles
+        return [profile for profile in profiles if profile.tenant_id == tenant_id]
 
 
 class ReviewFeedbackRepository:
@@ -119,10 +137,12 @@ class ReviewFeedbackRepository:
             con.execute("INSERT OR REPLACE INTO review_feedback (id, data) VALUES (?, ?)", (event.id, event.model_dump_json()))
         return event
 
-    def list(self, review_job_id: str | None = None) -> list[ReviewFeedbackEvent]:
+    def list(self, review_job_id: str | None = None, tenant_id: str | None = None) -> list[ReviewFeedbackEvent]:
         with self.storage._connect() as con:
             rows = con.execute("SELECT data FROM review_feedback ORDER BY rowid DESC").fetchall()
         events = [ReviewFeedbackEvent.model_validate(json.loads(row[0])) for row in rows]
+        if tenant_id:
+            events = [event for event in events if event.tenant_id == tenant_id]
         if review_job_id:
             return [event for event in events if event.review_job_id == review_job_id]
         return events
@@ -140,10 +160,12 @@ class MemoryRepository:
             )
         return record
 
-    def list(self, repository_name: str, memory_type: str | None = None) -> list[MemoryRecord]:
+    def list(self, repository_name: str, memory_type: str | None = None, tenant_id: str | None = None) -> list[MemoryRecord]:
         with self.storage._connect() as con:
             rows = con.execute("SELECT data FROM memory_records WHERE repository_name = ? ORDER BY rowid DESC", (repository_name,)).fetchall()
         records = [MemoryRecord.model_validate(json.loads(row[0])) for row in rows]
+        if tenant_id:
+            records = [record for record in records if record.tenant_id == tenant_id]
         if memory_type:
             return [record for record in records if record.memory_type == memory_type]
         return records
