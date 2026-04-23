@@ -1,22 +1,6 @@
 version: '3.9'
 
 services:
-  autonomyx-landing:
-    image: 'agentnext/autonomyx-landing:latest'
-    container_name: autonomyx-landing
-    environment:
-      - NODE_ENV=production
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    restart: unless-stopped
-    labels:
-      - "com.example.description=Autonomyx Premium B2B SaaS Landing Page"
-      - "com.example.version=1.0.0"
-
   code-reviewer:
     image: 'agentnext/code-reviewer:latest'
     build:
@@ -40,9 +24,6 @@ services:
       retries: 3
       start_period: 20s
     restart: unless-stopped
-    depends_on:
-      autonomyx-landing:
-        condition: service_healthy
     labels:
       - "com.example.description=CodeReviewer AI-Powered Code Review Service"
       - "com.example.version=0.1.0"
@@ -57,7 +38,6 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
     depends_on:
-      - autonomyx-landing
       - code-reviewer
     restart: unless-stopped
     healthcheck:
