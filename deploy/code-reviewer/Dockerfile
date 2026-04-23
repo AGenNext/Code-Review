@@ -2,30 +2,21 @@ FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app
 
-# Copy project files
+RUN useradd --create-home --uid 10001 appuser && \
+    mkdir -p /data
+
+RUN pip install --upgrade --retries 5 pip setuptools wheel
+
 COPY pyproject.toml README.md ./
 COPY src ./src
 
-# Install with retry logic for network resilience
-RUN pip install --upgrade pip && \
-    pip install --retries 5 \
-    'fastapi>=0.115.0' \
-    'uvicorn>=0.30.0' \
-    'pydantic>=2.8.0' \
-    'anthropic>=0.39.0' \
-    'opentelemetry-api>=1.29.0' \
-    'opentelemetry-sdk>=1.29.0' \
-    'opentelemetry-exporter-otlp-proto-http>=1.29.0' \
-    'opentelemetry-instrumentation-fastapi>=0.50b0' || \
-    pip install -e .
-
-# Create non-root user and data directory
-RUN useradd --create-home --uid 10001 appuser && \
-    mkdir -p /data && \
+RUN pip install --retries 5 --no-build-isolation . && \
+    python -c "import codereviewer.main" && \
     chown -R appuser:appuser /app /data
 
 USER appuser
