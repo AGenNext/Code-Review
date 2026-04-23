@@ -1,15 +1,9 @@
 version: '3.9'
 
 services:
-  # Autonomyx Landing Page
   autonomyx-landing:
-    image: agentnext/autonomyx-landing:latest
-    build:
-      context: ../../autonomyx-landing-docker
-      dockerfile: Dockerfile
+    image: 'agentnext/autonomyx-landing:latest'
     container_name: autonomyx-landing
-    ports:
-      - "3000:80"
     environment:
       - NODE_ENV=production
     healthcheck:
@@ -23,19 +17,22 @@ services:
       - "com.example.description=Autonomyx Premium B2B SaaS Landing Page"
       - "com.example.version=1.0.0"
 
-  # CodeReviewer Service
   code-reviewer:
-    image: agentnext/code-reviewer:latest
+    image: 'agentnext/code-reviewer:latest'
     build:
       context: .
       dockerfile: deploy/code-reviewer/Dockerfile
     container_name: code-reviewer
     env_file:
       - deploy/code-reviewer/.env
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     volumes:
       - codereviewer-data:/data
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - CODEREVIEWER_DB_PATH=/data/codereviewer.db
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).read()"]
       interval: 30s
@@ -46,17 +43,12 @@ services:
     depends_on:
       autonomyx-landing:
         condition: service_healthy
-    environment:
-      - HOST=0.0.0.0
-      - PORT=8000
-      - CODEREVIEWER_DB_PATH=/data/codereviewer.db
     labels:
       - "com.example.description=CodeReviewer AI-Powered Code Review Service"
       - "com.example.version=0.1.0"
 
-  # Nginx Reverse Proxy (Optional - for unified domain routing)
   nginx:
-    image: nginx:alpine
+    image: 'nginx:alpine'
     container_name: autonomyx-proxy
     ports:
       - "80:80"
