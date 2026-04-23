@@ -1,58 +1,63 @@
-# AgentNxt CodeReviewer Architecture
-
-## Architecture principles
-- Shared-core-first: business/domain logic belongs in `src/codereviewer/core`.
-- Typed contracts: API and service boundaries use explicit typed payloads.
-- Surface adapters: each surface composes shared backend capabilities; no surface forks core logic.
-- Core agent architecture: Claude Agent SDK remains the primary agent integration decision via adapter boundaries.
+# CodeReviewer Architecture
 
 ## Shared core
-- `core/models.py`: canonical review entities and contracts.
-- `core/logic.py`: severity-to-recommendation and summary scoring.
+- Path: `src/codereviewer/core`.
+- Contains typed domain contracts (reviews, findings, runtime profiles, feedback, memory) and deterministic scoring logic.
+- Shared by all current/future surfaces.
 
 ## Backend/API
-- FastAPI app in `api/app.py`.
-- Services:
-  - `ReviewService`: orchestrates job lifecycle.
-  - `RuntimeProfileService`: manages provider/model runtime profiles.
-  - `ClaudeAgentSDKReviewer`: Claude Agent SDK boundary adapter.
+- Path: `src/codereviewer/api/app.py`.
+- FastAPI routes expose providers/models, runtime profiles, reviews, memory, and feedback APIs.
 
-## Surface architecture by product surface
+## Persistence model
+- Path: `src/codereviewer/infra/repositories.py`.
+- SQLite-backed repositories for:
+  - runtime profiles
+  - review jobs
+  - feedback events
+  - memory records
+- Schema bootstrap is automatic at service startup.
 
-### AgentNxt CodeReviewer Web / Cloud (implemented)
-- Runtime: backend + web UI served from the current Python application surface.
-- Flow: UI -> API routes -> services -> shared core.
-- Scope now: end-to-end review submission + result retrieval, runtime profile management.
+## Review execution flow
+1. API receives `ReviewJob`.
+2. Review enters `queued`, then `running`.
+3. Runtime profile is validated/resolved.
+4. ContextBudgetManager prioritizes/truncates diff chunks.
+5. ClaudeAgentSDKReviewer performs analysis.
+6. Findings are summarized; review is persisted as `completed`/`failed`.
+7. Review-history memory is written.
 
-### AgentNxt CodeReviewer Desktop (scaffolded)
-- Runtime target: packaged desktop client consuming existing API contracts.
-- Architectural role: repo-adjacent and local-first review workflows.
-- Required dependency rule: desktop surface must remain a consumer of shared core contracts, never a replacement.
+## Claude Agent SDK boundary
+- `services/claude_agent_sdk.py` is the integration boundary.
+- Current local heuristic engine exists for deterministic testing and scaffolding.
+- Remaining gap: replace analyzer internals with live Claude Agent SDK runtime orchestration.
 
-### AgentNxt CodeReviewer Mobile (scaffolded)
-- Runtime target: mobile client for triage and decision workflows.
-- Architectural role: notification-driven interaction and lightweight finding inspection.
-- Required dependency rule: mobile UI stays thin; semantics remain backend/core owned.
+## Memory model
+- Transient run memory: in-process and request-scoped.
+- Durable review history: persisted `review_history` memory records per repository.
+- Durable workspace memory: `workspace` memory type schema supported and retrievable.
+- Rule/policy memory: currently explicit in code/policies, not user-editable in runtime.
 
-### AgentNxt CodeReviewer VS Code (scaffolded)
-- Runtime target: IDE extension that maps findings into editor diagnostics.
-- Architectural role: in-editor feedback and remediation loop.
-- Required dependency rule: consumes typed APIs; no duplicated scoring or finding taxonomy logic.
+## Feedback / self-improvement model
+- Feedback events are captured and persisted via typed API.
+- Improvement pipeline is guarded and reviewable: storage now, controlled rule/prompt updates later.
+- No autonomous mutation of core policies.
 
-### AgentNxt CodeReviewer Slack (scaffolded)
-- Runtime target: bot/app transport for notifications and workflow commands.
-- Architectural role: collaborative alerting and team routing.
-- Required dependency rule: Slack message formatting wraps shared finding outputs.
+## Dynamic context-window strategy
+- File-priority weighting with security-sensitive bias.
+- Prompt budget via char budget proxy derived from runtime profile token limits.
+- Overflow strategy: deterministic truncation and reduced chunk set.
 
-### AgentNxt CodeReviewer GitHub (scaffolded)
-- Runtime target: GitHub App/webhook + checks integration.
-- Architectural role: pull request gating and annotation delivery.
-- Required dependency rule: check results derive from shared review outcomes.
+## Surface architecture
+- CodeReviewer Web: **implemented** (API + UI).
+- CodeReviewer Desktop: **scaffolded**.
+- CodeReviewer Mobile: **scaffolded**.
+- CodeReviewer VS Code: **scaffolded**.
+- CodeReviewer Slack: **scaffolded**.
+- CodeReviewer GitHub: **scaffolded**.
+- CodeReviewer Chrome: **planned**.
 
-### AgentNxt CodeReviewer Chrome (planned)
-- Runtime target: browser extension for context capture and submission.
-- Architectural role: lightweight browser-side launch point for reviews.
-- Required dependency rule: extension sends captured context to backend APIs; review logic remains server/core-side.
-
-## Surface status integrity
-The repository deliberately distinguishes **implemented**, **scaffolded**, and **planned** surfaces so architecture documentation reflects reality and does not overstate delivery.
+## Current hardening gaps
+- Queue/worker-backed async execution and retries.
+- AuthN/AuthZ and tenant isolation.
+- Migration framework for evolving persistence schema.

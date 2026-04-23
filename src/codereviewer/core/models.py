@@ -29,6 +29,20 @@ class Provider(str, Enum):
     foundry = "foundry"
 
 
+class FindingCategory(str, Enum):
+    security = "security"
+    quality = "quality"
+    maintainability = "maintainability"
+
+
+class ReviewFeedbackType(str, Enum):
+    false_positive = "false_positive"
+    false_negative = "false_negative"
+    accepted = "accepted"
+    rejected = "rejected"
+    overridden = "overridden"
+
+
 class ModelConfiguration(BaseModel):
     model_id: str
     display_name: str
@@ -53,6 +67,7 @@ class RuntimeProfile(BaseModel):
     temperature: float = 0.1
     max_tokens: int = 4096
     is_default: bool = False
+    metadata: dict[str, str] = Field(default_factory=dict)
 
 
 class RepositoryContext(BaseModel):
@@ -75,6 +90,13 @@ class Finding(BaseModel):
     severity: Severity
     recommendation: RecommendationType
     file_path: str
+    category: FindingCategory = FindingCategory.quality
+    subtype: str = "general"
+    confidence: float = 0.5
+    evidence: str | None = None
+    remediation: str | None = None
+    provenance: str = "rule:heuristic"
+    fingerprint: str | None = None
     line_start: int | None = None
     line_end: int | None = None
 
@@ -95,6 +117,9 @@ class ReviewJobStatus(str, Enum):
 class ReviewJob(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    queued_at: datetime | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     status: ReviewJobStatus = ReviewJobStatus.queued
     repository: RepositoryContext
     changes: list[FileChangeContext]
@@ -102,3 +127,22 @@ class ReviewJob(BaseModel):
     findings: list[Finding] = Field(default_factory=list)
     summary: ReviewSummary | None = None
     error: str | None = None
+    retry_count: int = 0
+
+
+class ReviewFeedbackEvent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    review_job_id: str
+    finding_id: str | None = None
+    feedback_type: ReviewFeedbackType
+    reason: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class MemoryRecord(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    repository_name: str
+    memory_type: Literal["review_history", "workspace"]
+    key: str
+    value: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
