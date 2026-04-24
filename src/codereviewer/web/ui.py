@@ -186,6 +186,19 @@ INDEX_HTML = """
     </section>
 
     <section class="panel section">
+      <h2>Agent Chat</h2>
+      <p class="hint">Spawn all agents and send a message. Responses include the agent name.</p>
+      <div class="controls" style="grid-template-columns: 1fr;">
+        <form id="agent-chat-form">
+          <label>Agent</label><select id="chat-agent" required></select>
+          <label>Message</label><input id="chat-message" placeholder="clean repos and report status" required />
+          <button type="submit">Send to Agent</button>
+        </form>
+      </div>
+      <pre id="chat-output" style="margin-top:.6rem;background:#f8fbff;border:1px solid #dbe3ef;border-radius:10px;padding:.7rem"></pre>
+    </section>
+
+    <section class="panel section">
       <h2>Output</h2>
       <pre id="output"></pre>
     </section>
@@ -197,6 +210,7 @@ const stats = document.getElementById('stats');
 const timeline = document.getElementById('timeline');
 const logRows = document.getElementById('log-rows');
 const flowSvg = document.getElementById('flow-svg');
+const chatOutput = document.getElementById('chat-output');
 
 let appConfig = null;
 let reviewJobs = [];
@@ -436,7 +450,36 @@ document.getElementById('review-form').addEventListener('submit', async (e) => {
   await refreshAll();
 });
 
+
+
+async function initAgents() {
+  const spawnRes = await fetch('/api/agents/spawn-all', {method: 'POST'});
+  const spawnBody = await spawnRes.json();
+  if (!spawnRes.ok) throw new Error(spawnBody.detail || 'failed to spawn agents');
+  const agents = spawnBody.agents || [];
+  setOptions(document.getElementById('chat-agent'), agents.map(a => ({value:a, label:a})), 'Select agent');
+  chatOutput.textContent = `Spawned agents: ${agents.join(', ')}`;
+}
+
+document.getElementById('agent-chat-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const payload = {
+    agent_name: document.getElementById('chat-agent').value,
+    message: document.getElementById('chat-message').value
+  };
+  const res = await fetch('/api/agents/chat', {
+    method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify(payload)
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    chatOutput.textContent = `Error: ${body.detail || 'chat failed'}`;
+    return;
+  }
+  chatOutput.textContent = body.response;
+});
+
 refreshAll();
+initAgents();
 </script>
 </body>
 </html>

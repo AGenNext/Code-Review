@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from fastapi import Depends, FastAPI, HTTPException, Header
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from codereviewer.core.models import MemoryRecord, Provider, ReviewFeedbackEvent, ReviewJob, RuntimeProfile
 from codereviewer.infra.repositories import (
@@ -47,6 +48,28 @@ review_service = ReviewService(
 )
 runtime_service = RuntimeProfileService(profile_repo)
 feedback_service = FeedbackService(feedback_repo)
+
+
+AGENT_ROSTER = [
+    "code-reviewer",
+    "code-assist",
+    "code-tester",
+    "code-deploy",
+    "technical-writer",
+    "product-designer",
+    "design-agent",
+]
+
+
+class AgentChatRequest(BaseModel):
+    agent_name: str
+    message: str
+
+
+class AgentChatResponse(BaseModel):
+    agent_name: str
+    response: str
+
 
 @dataclass(frozen=True)
 class IdentityContext:
@@ -220,6 +243,29 @@ def test_notification() -> dict[str, bool]:
 def sso_config() -> SSOConfig:
     return load_sso_config()
 
+
+
+
+@app.post("/api/agents/spawn-all")
+def spawn_all_agents() -> dict[str, list[str]]:
+    return {"agents": AGENT_ROSTER}
+
+
+@app.get("/api/agents")
+def list_agents() -> list[str]:
+    return AGENT_ROSTER
+
+
+@app.post("/api/agents/chat", response_model=AgentChatResponse)
+def agent_chat(payload: AgentChatRequest) -> AgentChatResponse:
+    agent_name = payload.agent_name.strip()
+    if agent_name not in AGENT_ROSTER:
+        raise HTTPException(status_code=400, detail="Unknown agent")
+    message = payload.message.strip()
+    return AgentChatResponse(
+        agent_name=agent_name,
+        response=f"{agent_name}: received '{message}'. Task accepted.",
+    )
 
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
