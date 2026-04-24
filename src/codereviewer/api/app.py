@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, HTTPException, Header
 from fastapi.responses import HTMLResponse
@@ -69,6 +70,42 @@ class AgentChatRequest(BaseModel):
 class AgentChatResponse(BaseModel):
     agent_name: str
     response: str
+
+
+class AgentState(BaseModel):
+    agent_name: str
+    active: bool
+    last_seen: str
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _agent_idle_timeout_seconds() -> int:
+    return int(os.getenv("AGENT_MAX_IDLE_SECONDS", "1800"))
+
+
+AGENT_RUNTIME_STATE: dict[str, AgentState] = {
+    name: AgentState(agent_name=name, active=True, last_seen=_now_iso())
+    for name in AGENT_ROSTER
+}
+
+
+def _refresh_agent_states() -> None:
+    now = datetime.now(timezone.utc)
+    timeout = _agent_idle_timeout_seconds()
+    for state in AGENT_RUNTIME_STATE.values():
+        if not state.active:
+            continue
+        try:
+            last = datetime.fromisoformat(state.last_seen)
+        except ValueError:
+            state.active = False
+            continue
+        idle = (now - last).total_seconds()
+        if idle > timeout:
+            state.active = False
 
 
 @dataclass(frozen=True)
@@ -179,6 +216,9 @@ def frontend_config(identity: IdentityContext = Depends(get_identity_context)) -
                 "traces_endpoint": os.getenv("SIGNOZ_OTLP_TRACES_ENDPOINT", "http://localhost:4318/v1/traces"),
             },
             "sso": sso.model_dump(mode="json"),
+            "agent_runtime": {
+                "max_idle_seconds": _agent_idle_timeout_seconds(),
+            },
         },
     }
 
@@ -248,19 +288,45 @@ def sso_config() -> SSOConfig:
 
 @app.post("/api/agents/spawn-all")
 def spawn_all_agents() -> dict[str, list[str]]:
-    return {"agents": AGENT_ROSTER}
+    _refresh_agent_states()
+    return {"agents": [name for name, st in AGENT_RUNTIME_STATE.items() if st.active]}
 
 
 @app.get("/api/agents")
 def list_agents() -> list[str]:
-    return AGENT_ROSTER
+    _refresh_agent_states()
+    return [name for name, st in AGENT_RUNTIME_STATE.items() if st.active]
+
+
+@app.get("/api/agents/state")
+def list_agent_states() -> dict[str, object]:
+    _refresh_agent_states()
+    return {
+        "max_idle_seconds": _agent_idle_timeout_seconds(),
+        "agents": [st.model_dump(mode="json") for st in AGENT_RUNTIME_STATE.values()],
+    }
+
+
+@app.post("/api/agents/enable/{agent_name}")
+def enable_agent(agent_name: str) -> AgentState:
+    if agent_name not in AGENT_RUNTIME_STATE:
+        raise HTTPException(status_code=404, detail="Unknown agent")
+    st = AGENT_RUNTIME_STATE[agent_name]
+    st.active = True
+    st.last_seen = _now_iso()
+    return st
 
 
 @app.post("/api/agents/chat", response_model=AgentChatResponse)
 def agent_chat(payload: AgentChatRequest) -> AgentChatResponse:
+    _refresh_agent_states()
     agent_name = payload.agent_name.strip()
-    if agent_name not in AGENT_ROSTER:
+    if agent_name not in AGENT_RUNTIME_STATE:
         raise HTTPException(status_code=400, detail="Unknown agent")
+    st = AGENT_RUNTIME_STATE[agent_name]
+    if not st.active:
+        raise HTTPException(status_code=409, detail="Agent disabled due to idle timeout")
+    st.last_seen = _now_iso()
     message = payload.message.strip()
     return AgentChatResponse(
         agent_name=agent_name,

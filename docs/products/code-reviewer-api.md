@@ -52,6 +52,10 @@ Auth status: **No authentication is currently enforced**. Run only in controlled
 - `POST /api/agents/chat`
   - Request body: `{ "agent_name": string, "message": string }`.
   - Response: `{ "agent_name": string, "response": string }` with agent name prefix in response text.
+- `GET /api/agents/state`
+  - Response: active/disabled state per agent + `max_idle_seconds`.
+- `POST /api/agents/enable/{agent_name}`
+  - Re-enables an idle-disabled agent and refreshes last-seen timestamp.
 
 ## Request / response examples
 

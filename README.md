@@ -268,3 +268,5 @@ Registry publishing must go through GitHub PR review and CI workflow gates; no d
 - Unit path: `/etc/systemd/system/code-reviewer.service`
 - Runtime bind: `0.0.0.0:8787`
 - Health check: `curl http://127.0.0.1:8787/healthz`
+
+- `AGENT_MAX_IDLE_SECONDS` controls max idle time before agent is auto-disabled (default: `1800`).
