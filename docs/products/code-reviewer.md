@@ -11,3 +11,6 @@ CodeReviewer is a production-hardening focused code review product centered on a
 - Web console: `/app`
 - API reference: `docs/products/code-reviewer-api.md`
 - CI/CD reference: `docs/products/code-reviewer-cicd.md`
+
+## Deployment policy
+- CI/CD-only deployment policy: `docs/products/code-reviewer-deployment-policy.md`

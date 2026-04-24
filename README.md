@@ -143,3 +143,115 @@ docker compose -f deploy/code-reviewer/docker-compose.yml up --build
 - Agent identity header: `X-Agent-ID`.
 - If `X-Tenant-ID` is absent and `X-Agent-ID` is provided, tenant is derived as `agent:<agent_id>`.
 - Set `MULTITENANCY_REQUIRE_AGENT_IDENTITY=true` to require `X-Agent-ID` on API requests.
+
+## Coolify deployment (recommended)
+
+Deploying via Coolify is the preferred production path on this host.
+
+- Image: `ghcr.io/agentnxt/code-reviewer:latest`
+- Container port: `8080`
+- Domain: `codereviewer.agnxxt.com`
+- SSL: Let's Encrypt (enable in Coolify)
+
+Required environment variables:
+- `PYTHONPATH=/app/src`
+- `PORT=8080`
+
+Health check:
+- Path: `/healthz`
+- Expected: `200` with `{"status":"ok"}`
+
+## Deployment instruction boundaries
+
+### In scope
+- Coolify deployment steps for CodeReviewer using GHCR image tags.
+- Domain and TLS setup for `codereviewer.agnxxt.com`.
+- Required runtime environment variables and health check contract.
+
+### Out of scope
+- Organization-wide deployment policy.
+- DNS provider-specific account automation.
+- Non-CodeReviewer service orchestration details.
+
+## Shared instruction contribution rule
+When deployment or execution guidance here reveals reusable patterns, upstream them to `openautonomyx/common-instructions` so other repos can reuse the same instruction layer.
+
+## Skill feedback loop
+If usage patterns reveal repeated friction, convert the lesson into a reusable instruction pattern and upstream it to `openautonomyx/common-instructions`.
+
+## Prompt registry
+Track recurring operational prompts in a lightweight registry. Upstream reusable prompts to `openautonomyx/common-instructions` with clear purpose, trigger, inputs, and output contract.
+
+## Subagent evaluation and feedback policy
+CodeReviewer workflows should generate per-subagent evaluation and feedback for every reviewed subagent contribution, including decision summary, key findings, and concrete follow-up actions.
+
+## Deployment policy
+Production deployment must be CI/CD-only. Direct server deployment is not allowed.
+See `docs/products/code-reviewer-deployment-policy.md`.
+
+## Execution discipline rules
+- No context switching during active execution unless priorities are explicitly changed.
+- Maintain strict priority order from the active task list.
+- Track work with explicit task states: `pending`, `in_progress`, `blocked`, `done`.
+- For long-running tasks, run them in background jobs and continue non-blocking foreground tasks.
+
+## Communication rules
+- Keep responses concise and to the point.
+- Respond after research/verification.
+- Clarify when unclear; do not guess.
+- Check available past memory/context before asking follow-up questions.
+
+## Dynamic context handling
+Use established session context by default so users do not need to repeat stable details in every call. Request context only when missing, conflicting, or stale.
+
+## Project status tracking
+Status must be continuously tracked in GitHub. Primary tracker: `PROJECT_STATUS.md` (optionally mirrored to GitHub Projects).
+
+## Service consolidation rule
+Always consolidate services and avoid duplicates. Extend existing services by default; do not introduce parallel duplicate service implementations without explicit approval.
+
+## Pre-task model recommendation rule
+Before any new task is started, provide a best-fit LLM model recommendation balancing cost, speed, and benchmark quality, with one primary choice and optional fallback.
+
+## Pre-project deep research rule
+Before any new project starts, perform deep research and state the recommended approach with rationale (architecture options, risks, cost/speed tradeoffs, operational complexity) before execution.
+
+## Reuse-first rule
+Do not reinvent the wheel. Reuse proven solutions by default; implement custom components only when necessary and justified.
+
+## Repository governance standard
+This repository follows a one-product-per-repo model and requires complete product artifacts (PRD, design, HLD, DB schema, prompts, seed-data docs). See `docs/products/repository-governance-policy.md`.
+
+Environment variable policy:
+- Use `.env.example` as the non-secret variable template.
+- Keep secrets in secret manager/platform secrets, never in git.
+
+## Mandatory deployed-service baseline
+All production services must provide SSO, mail, notifications, error monitoring, telemetry, and analytics as baseline capabilities.
+
+## Code-deploy responsibility
+`code-deploy` is responsible for CI/CD setup and deployment automation, not manual production deploy steps.
+
+## Multi-agent responsibility model
+- `code-assist`: writes and maintains project documents.
+- `code-reviewer`: reviews PRD, HLD, LLD, and code.
+- `code-tester`: validates documents and test outcomes.
+- Reviewer feedback should be instructional to improve subagent capability over time.
+
+## Logging and traceability rule
+All reviews must be logged. Every action must include an action ID and trace metadata so workflows are fully traceable.
+
+## Agent identity logging
+All review/action logs must include `agent_id`.
+
+## Identifier and version rule
+All key entities/actions must have unique IDs; mutable entities must carry explicit versions.
+
+## Registry-first rule
+Resolve all reusable items from registries first. If missing, register first (model/skill/prompt/service-image) before use.
+
+## Canonical registry IDs
+Registries must expose canonical IDs; operational workflows should reference canonical IDs, not display names.
+
+## Registry publish rule
+Registry publishing must go through GitHub PR review and CI workflow gates; no direct manual publishing.

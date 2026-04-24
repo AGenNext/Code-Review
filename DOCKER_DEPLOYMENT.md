@@ -144,3 +144,37 @@ docker compose up --build
 2. Run build: `docker build -f deploy/code-reviewer/Dockerfile . --tag agentnext/code-reviewer:latest`
 3. Push: `docker push agentnext/code-reviewer:latest`
 4. Deploy: `docker run -p 8000:8000 agentnext/code-reviewer:latest`
+
+## Deploy via Coolify (GHCR + SSL)
+
+Use this when running CodeReviewer behind the existing Traefik/Coolify proxy.
+
+### Image
+- Registry image: `ghcr.io/agentnxt/code-reviewer:latest`
+- Optional fixed tag: `ghcr.io/agentnxt/code-reviewer:5678ca8`
+
+### Coolify Service Settings
+- Service type: Docker Image
+- Image: `ghcr.io/agentnxt/code-reviewer:latest`
+- Exposed port (container): `8080`
+- Domain: `codereviewer.agnxxt.com`
+- TLS/SSL: Enable Let's Encrypt
+
+### Environment Variables
+Add these variables in Coolify:
+- `PYTHONPATH=/app/src`
+- `PORT=8080`
+
+`PYTHONPATH=/app/src` is required with the current image layout to avoid:
+`ModuleNotFoundError: No module named 'codereviewer'`
+
+### Health Check
+- Path: `/healthz`
+- Expected response: `200` with `{"status":"ok"}`
+
+### Post-deploy verification
+```bash
+curl -I https://codereviewer.agnxxt.com/healthz
+```
+
+Expected: `HTTP/1.1 200 OK`
