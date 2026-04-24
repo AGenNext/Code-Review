@@ -187,14 +187,8 @@ INDEX_HTML = """
 
     <section class="panel section">
       <h2>Agent Chat</h2>
-      <p class="hint">Spawn all agents and send a message. Responses include the agent name.</p>
-      <div class="controls" style="grid-template-columns: 1fr;">
-        <form id="agent-chat-form">
-          <label>Agent</label><select id="chat-agent" required></select>
-          <label>Message</label><input id="chat-message" placeholder="clean repos and report status" required />
-          <button type="submit">Send to Agent</button>
-        </form>
-      </div>
+      <p class="hint">Each agent has its own chat panel for cleaner execution and tracking.</p>
+      <div id="agent-panels" class="controls" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));"></div>
       <pre id="chat-output" style="margin-top:.6rem;background:#f8fbff;border:1px solid #dbe3ef;border-radius:10px;padding:.7rem"></pre>
     </section>
 
@@ -211,6 +205,7 @@ const timeline = document.getElementById('timeline');
 const logRows = document.getElementById('log-rows');
 const flowSvg = document.getElementById('flow-svg');
 const chatOutput = document.getElementById('chat-output');
+const agentPanels = document.getElementById('agent-panels');
 
 let appConfig = null;
 let reviewJobs = [];
@@ -452,31 +447,58 @@ document.getElementById('review-form').addEventListener('submit', async (e) => {
 
 
 
+function agentStatusPill(active) {
+  return active ? '<span class="pill p-ok">active</span>' : '<span class="pill p-warn">disabled</span>';
+}
+
+async function sendAgentMessage(agentName, message, outputEl) {
+  const res = await fetch('/api/agents/chat', {
+    method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({agent_name: agentName, message})
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    outputEl.textContent = `Error: ${body.detail || 'chat failed'}`;
+    return;
+  }
+  outputEl.textContent = body.response;
+}
+
+function renderAgentPanels(states) {
+  agentPanels.innerHTML = '';
+  states.forEach((st) => {
+    const card = document.createElement('form');
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
+        <strong>${st.agent_name}</strong>
+        ${agentStatusPill(st.active)}
+      </div>
+      <label>Message</label>
+      <input name="message" placeholder="task for ${st.agent_name}" ${st.active ? '' : 'disabled'} required />
+      <button type="submit" ${st.active ? '' : 'disabled'}>Send</button>
+      <pre style="margin-top:.5rem;background:#f8fbff;border:1px solid #dbe3ef;border-radius:8px;padding:.5rem;min-height:56px"></pre>
+    `;
+    const msgInput = card.querySelector('input[name="message"]');
+    const out = card.querySelector('pre');
+    card.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await sendAgentMessage(st.agent_name, msgInput.value, out);
+    });
+    agentPanels.appendChild(card);
+  });
+}
+
 async function initAgents() {
   const spawnRes = await fetch('/api/agents/spawn-all', {method: 'POST'});
   const spawnBody = await spawnRes.json();
   if (!spawnRes.ok) throw new Error(spawnBody.detail || 'failed to spawn agents');
-  const agents = spawnBody.agents || [];
-  setOptions(document.getElementById('chat-agent'), agents.map(a => ({value:a, label:a})), 'Select agent');
-  chatOutput.textContent = `Spawned agents: ${agents.join(', ')}`;
-}
 
-document.getElementById('agent-chat-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const payload = {
-    agent_name: document.getElementById('chat-agent').value,
-    message: document.getElementById('chat-message').value
-  };
-  const res = await fetch('/api/agents/chat', {
-    method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify(payload)
-  });
-  const body = await res.json();
-  if (!res.ok) {
-    chatOutput.textContent = `Error: ${body.detail || 'chat failed'}`;
-    return;
-  }
-  chatOutput.textContent = body.response;
-});
+  const stateRes = await fetch('/api/agents/state');
+  const stateBody = await stateRes.json();
+  if (!stateRes.ok) throw new Error(stateBody.detail || 'failed to load agent state');
+
+  renderAgentPanels(stateBody.agents || []);
+  chatOutput.textContent = `Agents loaded: ${(spawnBody.agents || []).join(', ')}\nMax idle seconds: ${stateBody.max_idle_seconds}`;
+}
 
 refreshAll();
 initAgents();
