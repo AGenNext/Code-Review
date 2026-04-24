@@ -1,6 +1,6 @@
 # CodeReviewer API Reference
 
-Base runtime default: `http://localhost:8000`
+Base runtime default: `http://localhost:8000` (systemd deployment on this VPS runs `http://127.0.0.1:8787`)
 
 Auth status: **No authentication is currently enforced**. Run only in controlled environments.
 
@@ -44,6 +44,15 @@ Auth status: **No authentication is currently enforced**. Run only in controlled
 - `GET /api/feedback?review_job_id=<id>`
   - Response: `ReviewFeedbackEvent[]`.
 
+### Agent orchestration endpoints
+- `POST /api/agents/spawn-all`
+  - Response: `{ "agents": string[] }` (active agent roster).
+- `GET /api/agents`
+  - Response: `string[]` (same roster for UI selection).
+- `POST /api/agents/chat`
+  - Request body: `{ "agent_name": string, "message": string }`.
+  - Response: `{ "agent_name": string, "response": string }` with agent name prefix in response text.
+
 ## Request / response examples
 
 ### Create runtime profile
@@ -79,6 +88,18 @@ curl -X POST http://localhost:8000/api/reviews \
 ### Retrieve feedback for a review
 ```bash
 curl 'http://localhost:8000/api/feedback?review_job_id=job-1'
+```
+
+### Spawn all agents
+```bash
+curl -X POST http://localhost:8000/api/agents/spawn-all
+```
+
+### Send message to named agent
+```bash
+curl -X POST http://localhost:8000/api/agents/chat \
+  -H 'content-type: application/json' \
+  -d "{\"agent_name\":\"code-reviewer\",\"message\":\"clean repos\"}"
 ```
 
 ## Error behavior

@@ -60,3 +60,15 @@
 ## Canonical ID requirement
 - Model/skill/prompt/service-image registry lookups must use canonical IDs.
 - Logs and audit records should store canonical IDs for deterministic traceability.
+
+
+## Service operations (VPS)
+- Managed by `systemd` service: `code-reviewer`.
+- Restart command: `sudo systemctl restart code-reviewer`.
+- Status command: `sudo systemctl status code-reviewer`.
+- Logs: `sudo journalctl -u code-reviewer -f`.
+- Runtime uses virtualenv at `/home/ubuntu/code-reviewer/.venv`.
+
+## Agent chat operations
+- Spawn roster before chat via `POST /api/agents/spawn-all`.
+- Route chat by explicit `agent_name` to enforce named response behavior in terminal/UI chat.

@@ -255,3 +255,16 @@ Registries must expose canonical IDs; operational workflows should reference can
 
 ## Registry publish rule
 Registry publishing must go through GitHub PR review and CI workflow gates; no direct manual publishing.
+
+
+### Agent orchestration APIs
+- `POST /api/agents/spawn-all` returns the active roster used by UI/terminal chat.
+- `GET /api/agents` lists available agents.
+- `POST /api/agents/chat` routes a message to a selected agent and returns response prefixed with agent name.
+- Web UI now includes **Agent Chat** panel on `/app`.
+
+### VPS systemd service
+- Service name: `code-reviewer`
+- Unit path: `/etc/systemd/system/code-reviewer.service`
+- Runtime bind: `0.0.0.0:8787`
+- Health check: `curl http://127.0.0.1:8787/healthz`
