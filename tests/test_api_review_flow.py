@@ -162,3 +162,31 @@ def test_frontend_config_exposes_safe_runtime_config(monkeypatch) -> None:
     assert config["integrations"]["sso"]["client_secret_configured"] is True
     assert "sk-ant-secret" not in response.text
     assert "sso-secret" not in response.text
+
+
+def test_invalid_tenant_id_rejected() -> None:
+    client = TestClient(app)
+    response = client.get("/api/config", headers={"X-Tenant-ID": "bad tenant"})
+    assert response.status_code == 400
+    assert "X-Tenant-ID" in response.text
+
+
+def test_security_headers_present_on_api_response() -> None:
+    client = TestClient(app)
+    response = client.get("/api/config")
+    assert response.status_code == 200
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Referrer-Policy"] == "no-referrer"
+
+
+def test_bearer_auth_guard_for_api(monkeypatch) -> None:
+    monkeypatch.setenv("API_BEARER_AUTH_ENABLED", "true")
+    monkeypatch.setenv("API_BEARER_TOKEN", "secret-token")
+    client = TestClient(app)
+
+    unauthorized = client.get("/api/config")
+    assert unauthorized.status_code == 401
+
+    authorized = client.get("/api/config", headers={"Authorization": "Bearer secret-token"})
+    assert authorized.status_code == 200

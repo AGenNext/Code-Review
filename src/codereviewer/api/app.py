@@ -1,11 +1,13 @@
 import os
+import re
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from fastapi import Depends, FastAPI, HTTPException, Header
+from fastapi import Depends, FastAPI, HTTPException, Header, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from codereviewer.core.models import MemoryRecord, Provider, ReviewFeedbackEvent, ReviewJob, RuntimeProfile
@@ -29,6 +31,7 @@ from codereviewer.web.ui import INDEX_HTML
 
 app = FastAPI(title="CodeReviewer")
 configure_signoz(app)
+TENANT_ID_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.:-]{1,62}$")
 
 static_dir = Path(__file__).resolve().parent.parent / "web" / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -125,6 +128,41 @@ def _is_enabled(value: str | None) -> bool:
     return (value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _security_enabled() -> bool:
+    return _is_enabled(os.getenv("SECURITY_HARDENING_ENABLED", "true"))
+
+
+def _bearer_auth_enabled() -> bool:
+    return _is_enabled(os.getenv("API_BEARER_AUTH_ENABLED", "false"))
+
+
+def _is_public_path(path: str) -> bool:
+    return path in {"/", "/healthz", "/app"} or path.startswith("/static/")
+
+
+def _is_valid_tenant_id(value: str) -> bool:
+    return bool(TENANT_ID_PATTERN.match(value))
+
+
+@app.middleware("http")
+async def security_middleware(request: Request, call_next):
+    if _bearer_auth_enabled() and request.url.path.startswith("/api/"):
+        auth = request.headers.get("authorization", "")
+        token = auth.removeprefix("Bearer ").strip() if auth.startswith("Bearer ") else ""
+        expected = os.getenv("API_BEARER_TOKEN", "").strip()
+        if not _is_public_path(request.url.path) and (not token or not expected or token != expected):
+            return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+
+    response = await call_next(request)
+    if _security_enabled():
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def get_identity_context(
     x_tenant_id: str | None = Header(default=None, alias="X-Tenant-ID"),
     x_agent_id: str | None = Header(default=None, alias="X-Agent-ID"),
@@ -136,6 +174,8 @@ def get_identity_context(
         raise HTTPException(status_code=401, detail="X-Agent-ID is required")
 
     if tenant_id:
+        if not _is_valid_tenant_id(tenant_id):
+            raise HTTPException(status_code=400, detail="X-Tenant-ID must be 2-63 chars and use [a-zA-Z0-9_.:-]")
         return IdentityContext(tenant_id=tenant_id, agent_id=agent_id)
     if agent_id:
         return IdentityContext(tenant_id=f"agent:{agent_id}", agent_id=agent_id)
