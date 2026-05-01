@@ -164,6 +164,12 @@ docker compose -f deploy/code-reviewer/docker-compose.yml up --build
 ### SSO Config API
 - `GET /api/sso/config` returns effective SSO runtime configuration (secret value is not returned).
 
+### API security hardening controls
+- `SECURITY_HARDENING_ENABLED=true` enables hardened security response headers (default: enabled).
+- `API_BEARER_AUTH_ENABLED=true` enforces bearer-token auth on `/api/*` routes.
+- `API_BEARER_TOKEN=<strong-random-token>` is required when bearer auth is enabled.
+- Tenant header validation is enforced: `X-Tenant-ID` must be 2-63 chars using `[a-zA-Z0-9_.:-]`.
+
 ### Claude Agent SDK Runtime
 - Set `CLAUDE_AGENT_SDK_ENABLED=true` to enable real Claude-backed review calls.
 - Set `CLAUDE_API_KEY` (or use a runtime profile auth reference that already contains an `sk-ant-` key).
