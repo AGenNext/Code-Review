@@ -138,6 +138,37 @@ docker compose -f deploy/code-reviewer/docker-compose.yml up --build
   - `litellm_model`: use exact LiteLLM model route (highest priority)
   - `litellm_provider`: choose provider key from prefix map for model prefixing
 
+
+### AWS Bedrock integration for Claude code review
+Use this when you want CodeReviewer to run Claude via **AWS Bedrock** instead of direct Anthropic API calls.
+
+1. Enable Claude runtime and LiteLLM routing:
+   - `CLAUDE_AGENT_SDK_ENABLED=true`
+   - `LITELLM_ENABLED=true`
+2. Point LiteLLM to your gateway that is configured for AWS credentials/role access:
+   - `LITELLM_BASE_URL=http://<litellm-host>:4000`
+   - `LITELLM_API_KEY=<optional-if-your-gateway-requires-it>`
+3. Keep Bedrock routing in provider prefix map (default already supports this):
+   - `LITELLM_PROVIDER_PREFIX_MAP={"bedrock":"bedrock/","anthropic":"anthropic/","vertex":"vertex_ai/","foundry":"azure/"}`
+4. Create a runtime profile with Bedrock provider + Bedrock Claude model id:
+
+```json
+{
+  "name": "bedrock-claude-review",
+  "provider": "bedrock",
+  "model_id": "anthropic.claude-sonnet-4",
+  "auth_reference": "aws-iam",
+  "temperature": 0.1,
+  "max_tokens": 4096,
+  "is_default": true
+}
+```
+
+Notes:
+- Provider and model are validated as a typed pair by the runtime profile service.
+- For Bedrock, `auth_reference` is a tenant-owned reference label (for example `aws-iam`), while actual AWS credentials should stay in your runtime/secret manager path.
+- Optional override: set runtime profile metadata `litellm_model` to force an exact route like `bedrock/anthropic.claude-sonnet-4`.
+
 ### Multitenancy and Agent Identity
 - Tenant scope header: `X-Tenant-ID` (defaults to `default`).
 - Agent identity header: `X-Agent-ID`.
