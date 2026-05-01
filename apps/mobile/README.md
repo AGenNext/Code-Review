@@ -1,4 +1,4 @@
-# AgentNxt CodeReviewer Mobile Surface Adapter
+# AGenNext CodeReview Mobile Surface Adapter
 
 ## Purpose
 Mobile provides quick triage, escalation, and approval workflows for review findings when users are away from desktop/browser contexts.

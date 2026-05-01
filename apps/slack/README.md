@@ -1,4 +1,4 @@
-# AgentNxt CodeReviewer Slack Surface Adapter
+# AGenNext CodeReview Slack Surface Adapter
 
 ## Purpose
 Slack enables team-facing review notifications, digests, and collaborative routing of high-priority findings.

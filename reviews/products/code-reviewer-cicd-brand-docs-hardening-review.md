@@ -1,4 +1,4 @@
-# CodeReviewer CI/CD + Brand + Docs Hardening Review
+# AGenNext CodeReview CI/CD + Brand + Docs Hardening Review
 
 ## What was added
 - Added GitHub Actions CI baseline (`.github/workflows/ci.yml`) with test, package build, and container build validation jobs.

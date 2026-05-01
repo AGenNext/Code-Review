@@ -1,4 +1,4 @@
-# AgentNxt CodeReviewer Chrome Surface Adapter
+# AGenNext CodeReview Chrome Surface Adapter
 
 ## Purpose
 Chrome is the browser-side context-capture and handoff surface for users working in web-based repository and review tools.

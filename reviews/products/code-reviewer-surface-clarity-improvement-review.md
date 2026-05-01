@@ -1,4 +1,4 @@
-# AgentNxt CodeReviewer Surface Clarity Improvement Review
+# AGenNext CodeReview Surface Clarity Improvement Review
 
 ## Summary of changes
 - Added explicit multi-surface status documentation across root/product/architecture/roadmap docs.

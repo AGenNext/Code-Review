@@ -1,4 +1,4 @@
-# AgentNxt CodeReviewer VS Code Surface Adapter
+# AGenNext CodeReview VS Code Surface Adapter
 
 ## Purpose
 VS Code integrates review results directly into the editor to shorten the feedback loop during coding and pull-request preparation.

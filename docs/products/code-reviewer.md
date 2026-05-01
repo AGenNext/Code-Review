@@ -1,10 +1,10 @@
-# CodeReviewer Product
+# AGenNext CodeReview Product
 
 - Org: `agentnxt`
 - Repo: `code-reviewer`
-- Product: `CodeReviewer`
+- Product: `AGenNext CodeReview`
 
-CodeReviewer is a production-hardening focused code review product centered on an implemented Web surface and shared-core-first architecture.
+AGenNext CodeReview is a production-hardening focused code review product centered on an implemented Web surface and shared-core-first architecture.
 
 ## Primary entry points
 - Landing page: `/`

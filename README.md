@@ -1,9 +1,9 @@
-# CodeReviewer
+# AGenNext CodeReview
 
-CodeReviewer (`agentnxt/code-reviewer`) is a production-oriented code review service with a typed FastAPI backend, SQLite persistence, review lifecycle tracking, and a Claude Agent SDK integration boundary.
+AGenNext CodeReview (`agentnxt/code-reviewer`) is a production-oriented code review service with a typed FastAPI backend, SQLite persistence, review lifecycle tracking, and a Claude Agent SDK integration boundary.
 
 ## Purpose
-CodeReviewer helps teams submit code diffs, execute policy-guided reviews, inspect findings, and capture feedback for controlled quality improvements.
+AGenNext CodeReview helps teams submit code diffs, execute policy-guided reviews, inspect findings, and capture feedback for controlled quality improvements.
 
 ## Product entry points
 - Landing page: `GET /`
@@ -47,16 +47,16 @@ pytest -q
 
 | Surface | Status | What exists now |
 |---|---|---|
-| CodeReviewer Web | implemented | FastAPI + landing page + web console for submission/history/profile flows |
-| CodeReviewer Desktop | scaffolded | Adapter definition in `apps/desktop/README.md` |
-| CodeReviewer Mobile | scaffolded | Adapter definition in `apps/mobile/README.md` |
-| CodeReviewer VS Code | scaffolded | Adapter definition in `apps/vscode/README.md` |
-| CodeReviewer Slack | scaffolded | Adapter definition in `apps/slack/README.md` |
-| CodeReviewer GitHub | scaffolded | Adapter definition in `apps/github/README.md` |
-| CodeReviewer Chrome | planned | Planning stub in `apps/chrome/README.md` |
+| AGenNext CodeReview Web | implemented | FastAPI + landing page + web console for submission/history/profile flows |
+| AGenNext CodeReview Desktop | scaffolded | Adapter definition in `apps/desktop/README.md` |
+| AGenNext CodeReview Mobile | scaffolded | Adapter definition in `apps/mobile/README.md` |
+| AGenNext CodeReview VS Code | scaffolded | Adapter definition in `apps/vscode/README.md` |
+| AGenNext CodeReview Slack | scaffolded | Adapter definition in `apps/slack/README.md` |
+| AGenNext CodeReview GitHub | scaffolded | Adapter definition in `apps/github/README.md` |
+| AGenNext CodeReview Chrome | planned | Planning stub in `apps/chrome/README.md` |
 
 ## Branding and assets
-- Product name is locked as `CodeReviewer`.
+- Product name is locked as `AGenNext CodeReview`.
 - Repo slug is locked as `code-reviewer`.
 - Web brand assets are served from `src/codereviewer/web/static/logo.svg` and `src/codereviewer/web/static/favicon.svg`.
 
@@ -75,7 +75,7 @@ python -m codereviewer.main
 
 ## macOS installation (Apple Silicon + Intel)
 
-Use these steps to install and run CodeReviewer on macOS.
+Use these steps to install and run AGenNext CodeReview on macOS.
 
 1. Install Python 3.11+ and build tools:
 ```bash
@@ -90,7 +90,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 ```
 
-3. Install CodeReviewer with development dependencies:
+3. Install AGenNext CodeReview with development dependencies:
 ```bash
 pip install -e .[dev]
 ```
@@ -176,8 +176,8 @@ docker compose -f deploy/code-reviewer/docker-compose.yml up --build
   - `litellm_provider`: choose provider key from prefix map for model prefixing
 
 
-### AWS Bedrock integration for Claude code review
-Use this when you want CodeReviewer to run Claude via **AWS Bedrock** instead of direct Anthropic API calls.
+### AWS Bedrock integration for AGenNext CodeReview
+Use this when you want AGenNext CodeReview to run Claude via **AWS Bedrock** instead of direct Anthropic API calls.
 
 1. Enable Claude runtime and LiteLLM routing:
    - `CLAUDE_AGENT_SDK_ENABLED=true`
@@ -232,7 +232,7 @@ Health check:
 ## Deployment instruction boundaries
 
 ### In scope
-- Coolify deployment steps for CodeReviewer using GHCR image tags.
+- Coolify deployment steps for AGenNext CodeReview using GHCR image tags.
 - Domain and TLS setup for `codereviewer.agnxxt.com`.
 - Required runtime environment variables and health check contract.
 
@@ -332,8 +332,8 @@ Registry publishing must go through GitHub PR review and CI workflow gates; no d
 - Web UI now includes **Agent Chat** panel on `/app`.
 
 ### VPS systemd service
-- Service name: `code-reviewer`
-- Unit path: `/etc/systemd/system/code-reviewer.service`
+- Service name: `agentnxt-codereviewer`
+- Unit path: `/etc/systemd/system/agentnxt-codereviewer.service`
 - Runtime bind: `0.0.0.0:8787`
 - Health check: `curl http://127.0.0.1:8787/healthz`
 

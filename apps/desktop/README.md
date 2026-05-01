@@ -1,4 +1,4 @@
-# AgentNxt CodeReviewer Desktop Surface Adapter
+# AGenNext CodeReview Desktop Surface Adapter
 
 ## Purpose
 Desktop is the local/repo-adjacent surface for users who need native packaging, local context handling, or controlled enterprise workstation workflows.

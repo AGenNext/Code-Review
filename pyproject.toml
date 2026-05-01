@@ -1,7 +1,7 @@
 [project]
 name = "agentnxt-codereviewer"
 version = "0.1.0"
-description = "AgentNxt CodeReviewer production application"
+description = "AGenNext CodeReview production application"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

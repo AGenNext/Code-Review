@@ -1,4 +1,4 @@
-# CodeReviewer Desktop Test Cases
+# AGenNext CodeReview Desktop Test Cases
 
 This desktop surface is currently scaffolded. The cases below define the minimum validation set for implementation and QA.
 

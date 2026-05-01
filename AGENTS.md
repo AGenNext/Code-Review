@@ -1,4 +1,4 @@
-# AGENTS: AgentNxt CodeReviewer
+# AGENTS: AGenNext CodeReview
 
 ## Repo identity
 - Org: `agentnxt`
