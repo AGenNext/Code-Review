@@ -72,6 +72,43 @@ pytest -q
 python -m codereviewer.main
 ```
 
+
+## macOS installation (Apple Silicon + Intel)
+
+Use these steps to install and run CodeReviewer on macOS.
+
+1. Install Python 3.11+ and build tools:
+```bash
+brew update
+brew install python@3.11
+```
+
+2. Create and activate a virtual environment:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+```
+
+3. Install CodeReviewer with development dependencies:
+```bash
+pip install -e .[dev]
+```
+
+4. Run tests and start the app:
+```bash
+pytest -q
+python -m codereviewer.main
+```
+
+5. Open the UI:
+- Landing page: `http://127.0.0.1:8080/`
+- Web console: `http://127.0.0.1:8080/app`
+
+Notes:
+- If your shell cannot find `python3`, restart terminal after Homebrew install.
+- For Bedrock-backed reviews on macOS, keep using the same `LITELLM_*` and runtime-profile configuration documented below.
+
 ## Docker/Coolify configuration
 All container runtime configuration is environment-driven.
 
