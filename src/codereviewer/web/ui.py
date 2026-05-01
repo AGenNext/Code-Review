@@ -71,6 +71,8 @@ INDEX_HTML = """
     }
     .actions button.secondary { background: #4f637d; }
     .actions a { color: var(--brand); text-decoration: none; font-size: .92rem; }
+    .tenant-bar { display:flex; gap:.5rem; align-items:center; margin-top:.4rem; }
+    .tenant-bar input { max-width: 220px; }
     .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; margin-bottom: 1rem; }
     .section { padding: .95rem 1rem 1rem; }
     .section h2 { margin: 0 0 .6rem 0; font-size: 1rem; }
@@ -129,6 +131,10 @@ INDEX_HTML = """
       </article>
       <aside class="panel actions">
         <button id="refresh">Refresh Telemetry</button>
+        <div class="tenant-bar">
+          <input id="tenant-id" placeholder="tenant id (default)" value="default" />
+          <button class="secondary" id="apply-tenant" type="button">Apply Tenant</button>
+        </div>
         <button class="secondary" id="seed-demo">Seed Demo Flow</button>
         <a href="/">Back to landing</a>
         <a href="/api/reviews">API: /api/reviews</a>
@@ -206,6 +212,7 @@ const logRows = document.getElementById('log-rows');
 const flowSvg = document.getElementById('flow-svg');
 const chatOutput = document.getElementById('chat-output');
 const agentPanels = document.getElementById('agent-panels');
+const tenantInput = document.getElementById('tenant-id');
 
 let appConfig = null;
 let reviewJobs = [];
@@ -218,6 +225,16 @@ const fmt = (iso) => {
 
 const short = (v, n=8) => (v || '').toString().slice(0, n);
 const randId = () => Math.random().toString(36).slice(2, 10);
+
+function activeTenantId() {
+  const raw = (tenantInput?.value || 'default').trim();
+  return raw || 'default';
+}
+
+function tenantHeaders(extra = {}) {
+  return {...extra, 'X-Tenant-ID': activeTenantId()};
+}
+
 
 function pill(status) {
   const map = {
@@ -370,7 +387,7 @@ function renderRuntimeControls() {
 }
 
 async function loadConfig() {
-  const res = await fetch('/api/config');
+  const res = await fetch('/api/config', {headers: tenantHeaders()});
   const body = await res.json();
   if (!res.ok) throw new Error(body.detail || 'failed to load config');
   appConfig = body;
@@ -378,7 +395,7 @@ async function loadConfig() {
 }
 
 async function loadReviews() {
-  const res = await fetch('/api/reviews');
+  const res = await fetch('/api/reviews', {headers: tenantHeaders()});
   const body = await res.json();
   if (!res.ok) throw new Error(body.detail || 'failed to load reviews');
   reviewJobs = body || [];
@@ -391,7 +408,7 @@ async function refreshAll() {
     renderFlow();
     renderTimeline();
     renderLogs();
-    output.textContent = 'Refreshed flow console.';
+    output.textContent = `Refreshed flow console for tenant: ${activeTenantId()}.`; 
   } catch (err) {
     output.textContent = `Error: ${err.message}`;
   }
@@ -399,6 +416,12 @@ async function refreshAll() {
 
 document.getElementById('refresh').addEventListener('click', refreshAll);
 document.getElementById('provider').addEventListener('change', updateModelOptions);
+document.getElementById('apply-tenant').addEventListener('click', async () => {
+  output.textContent = `Switched to tenant: ${activeTenantId()}`;
+  await refreshAll();
+  await initAgents();
+});
+
 document.getElementById('seed-demo').addEventListener('click', () => {
   reviewJobs = [];
   ensureDemoData();
@@ -419,7 +442,7 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
     is_default: true
   };
   const res = await fetch('/api/runtime-profiles', {
-    method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(payload)
+    method: 'POST', headers: tenantHeaders({'content-type': 'application/json'}), body: JSON.stringify(payload)
   });
   const body = await res.json();
   if (!res.ok) return (output.textContent = `Error: ${body.detail || 'Failed to save profile'}`);
@@ -437,7 +460,7 @@ document.getElementById('review-form').addEventListener('submit', async (e) => {
     changes: [{path: 'sample.py', change_type: 'modified', patch}]
   };
   const res = await fetch('/api/reviews', {
-    method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(payload)
+    method:'POST', headers: tenantHeaders({'content-type':'application/json'}), body: JSON.stringify(payload)
   });
   const body = await res.json();
   if (!res.ok) return (output.textContent = `Error: ${body.detail || 'Failed to submit review'}`);
@@ -453,7 +476,7 @@ function agentStatusPill(active) {
 
 async function sendAgentMessage(agentName, message, outputEl) {
   const res = await fetch('/api/agents/chat', {
-    method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({agent_name: agentName, message})
+    method: 'POST', headers: tenantHeaders({'content-type':'application/json'}), body: JSON.stringify({agent_name: agentName, message})
   });
   const body = await res.json();
   if (!res.ok) {
@@ -488,16 +511,16 @@ function renderAgentPanels(states) {
 }
 
 async function initAgents() {
-  const spawnRes = await fetch('/api/agents/spawn-all', {method: 'POST'});
+  const spawnRes = await fetch('/api/agents/spawn-all', {method: 'POST', headers: tenantHeaders()});
   const spawnBody = await spawnRes.json();
   if (!spawnRes.ok) throw new Error(spawnBody.detail || 'failed to spawn agents');
 
-  const stateRes = await fetch('/api/agents/state');
+  const stateRes = await fetch('/api/agents/state', {headers: tenantHeaders()});
   const stateBody = await stateRes.json();
   if (!stateRes.ok) throw new Error(stateBody.detail || 'failed to load agent state');
 
   renderAgentPanels(stateBody.agents || []);
-  chatOutput.textContent = `Agents loaded: ${(spawnBody.agents || []).join(', ')}\nMax idle seconds: ${stateBody.max_idle_seconds}`;
+  chatOutput.textContent = `Tenant: ${activeTenantId()}\nAgents loaded: ${(spawnBody.agents || []).join(', ')}\nMax idle seconds: ${stateBody.max_idle_seconds}`;
 }
 
 refreshAll();
