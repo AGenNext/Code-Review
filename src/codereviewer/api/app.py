@@ -5,9 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, HTTPException, Header, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from codereviewer.core.models import MemoryRecord, Provider, ReviewFeedbackEvent, ReviewJob, RuntimeProfile
@@ -136,10 +135,6 @@ def _bearer_auth_enabled() -> bool:
     return _is_enabled(os.getenv("API_BEARER_AUTH_ENABLED", "false"))
 
 
-def _is_public_path(path: str) -> bool:
-    return path in {"/", "/healthz", "/app"} or path.startswith("/static/")
-
-
 def _is_valid_tenant_id(value: str) -> bool:
     return bool(TENANT_ID_PATTERN.match(value))
 
@@ -150,7 +145,7 @@ async def security_middleware(request: Request, call_next):
         auth = request.headers.get("authorization", "")
         token = auth.removeprefix("Bearer ").strip() if auth.startswith("Bearer ") else ""
         expected = os.getenv("API_BEARER_TOKEN", "").strip()
-        if not _is_public_path(request.url.path) and (not token or not expected or token != expected):
+        if not token or not expected or token != expected:
             return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
 
     response = await call_next(request)
@@ -322,9 +317,6 @@ def test_notification() -> dict[str, bool]:
 @app.get("/api/sso/config")
 def sso_config() -> SSOConfig:
     return load_sso_config()
-
-
-
 
 @app.post("/api/agents/spawn-all")
 def spawn_all_agents() -> dict[str, list[str]]:
