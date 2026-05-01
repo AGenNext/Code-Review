@@ -1,4 +1,4 @@
-# CodeReviewer Production Hardening Review
+# AGenNext CodeReview Production Hardening Review
 
 ## What was hardened
 - Introduced durable SQLite persistence for profiles, jobs, feedback, and memory.

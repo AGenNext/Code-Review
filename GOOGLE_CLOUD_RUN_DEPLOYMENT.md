@@ -102,7 +102,7 @@ chmod +x deploy-cloudrun.sh
 # List deployed services
 gcloud run services list --region=us-central1
 
-# Test CodeReviewer
+# Test AGenNext CodeReview
 CODEREVIEWER_URL=$(gcloud run services describe code-reviewer \
   --region=us-central1 \
   --format='value(status.url)')
@@ -145,7 +145,7 @@ gcloud secrets add-iam-policy-binding code-reviewer-claude-key \
   --role=roles/secretmanager.secretAccessor
 ```
 
-### Step 3: Build CodeReviewer
+### Step 3: Build AGenNext CodeReview
 
 ```bash
 cd code-reviewer
@@ -161,7 +161,7 @@ gcloud builds submit \
   -f Dockerfile.cloudrun .
 ```
 
-### Step 4: Deploy CodeReviewer
+### Step 4: Deploy AGenNext CodeReview
 
 ```bash
 gcloud run deploy code-reviewer \

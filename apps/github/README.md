@@ -1,4 +1,4 @@
-# AgentNxt CodeReviewer GitHub Surface Adapter
+# AGenNext CodeReview GitHub Surface Adapter
 
 ## Purpose
 GitHub is the pull-request-native automation surface for checks, status reporting, and contextual review feedback.

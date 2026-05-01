@@ -1,4 +1,4 @@
-# AgentNxt CodeReviewer Production Review
+# AGenNext CodeReview Production Review
 
 ## Summary of changes
 Implemented a production-oriented standalone repository baseline with typed domain model, FastAPI backend, web/cloud UI, runtime profile management, provider/model separation, tests, deploy assets, and multi-surface starter adapters.

@@ -1,4 +1,4 @@
-# CodeReviewer Operations
+# AGenNext CodeReview Operations
 
 ## Configuration model
 - Runtime profiles specify provider, model, auth reference, generation controls.

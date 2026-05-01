@@ -1,6 +1,6 @@
-# CodeReviewer Surface Definitions
+# AGenNext CodeReview Surface Definitions
 
-## CodeReviewer Web
+## AGenNext CodeReview Web
 - Purpose: primary review submission and findings exploration surface.
 - Workflow: create runtime profile -> submit diff review -> inspect findings/history.
 - Status: **implemented**.
@@ -9,7 +9,7 @@
 - Not yet implemented: advanced UI filtering and auth-based tenancy.
 - Next milestone: pagination/filtering and operator observability panels.
 
-## CodeReviewer Desktop
+## AGenNext CodeReview Desktop
 - Purpose: repo-adjacent workflows in controlled environments.
 - Intended runtime/packaging: packaged desktop shell (e.g., Tauri/Electron) consuming existing API.
 - Status: **scaffolded**.
@@ -18,7 +18,7 @@
 - Not yet implemented: packaged runtime, secure profile management, update channel.
 - Next milestone: minimal shell with profile/review/history views.
 
-## CodeReviewer Mobile
+## AGenNext CodeReview Mobile
 - Purpose: on-call triage and high-severity decision actions.
 - Intended workflow: consume review alerts, inspect findings, submit feedback.
 - Status: **scaffolded**.
@@ -27,7 +27,7 @@
 - Not yet implemented: app runtime and auth/session handling.
 - Next milestone: read-only review history + feedback submission.
 
-## CodeReviewer VS Code
+## AGenNext CodeReview VS Code
 - Purpose: in-editor diagnostics for changed files.
 - Intended workflow: PR diff reviewed in backend, diagnostics shown in editor.
 - Status: **scaffolded**.
@@ -36,7 +36,7 @@
 - Not yet implemented: extension runtime and diagnostics mapping.
 - Next milestone: extension command to submit current diff.
 
-## CodeReviewer Slack
+## AGenNext CodeReview Slack
 - Purpose: collaborative notifications and approvals.
 - Intended workflow: receive findings digest and route high-severity alerts.
 - Status: **scaffolded**.
@@ -45,7 +45,7 @@
 - Not yet implemented: Slack app runtime and interaction handlers.
 - Next milestone: digest notification with deep-links to Web.
 
-## CodeReviewer GitHub
+## AGenNext CodeReview GitHub
 - Purpose: pull-request checks integration.
 - Intended workflow: run review per PR and post status/check annotations.
 - Status: **scaffolded**.
@@ -54,7 +54,7 @@
 - Not yet implemented: GitHub App/webhook/check-run transport.
 - Next milestone: PR check-run creation with summary results.
 
-## CodeReviewer Chrome
+## AGenNext CodeReview Chrome
 - Purpose: browser-side context capture for review submission.
 - Intended workflow: capture snippets/context and forward to backend review.
 - Status: **planned**.

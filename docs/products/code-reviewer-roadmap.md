@@ -1,7 +1,7 @@
-# CodeReviewer Roadmap (Honest Sequence)
+# AGenNext CodeReview Roadmap (Honest Sequence)
 
 ## Now (implemented)
-- CodeReviewer Web is the only implemented product surface.
+- AGenNext CodeReview Web is the only implemented product surface.
 - Durable local persistence, feedback/event model, and context budgeting are implemented.
 
 ## Next hardening milestone

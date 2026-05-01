@@ -1,4 +1,4 @@
-# CodeReviewer Architecture
+# AGenNext CodeReview Architecture
 
 ## Shared core
 - Path: `src/codereviewer/core`.

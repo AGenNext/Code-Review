@@ -1,6 +1,6 @@
-# CodeReviewer Testing Documentation
+# AGenNext CodeReview Testing Documentation
 
-This folder defines the test policy and standard operating procedures (SOPs) for CodeReviewer.
+This folder defines the test policy and standard operating procedures (SOPs) for AGenNext CodeReview.
 
 ## Documents
 - `docs/testing/test-case-policy.md`

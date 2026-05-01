@@ -1,4 +1,4 @@
-# Autonomyx + CodeReviewer Multi-Service Deployment Guide
+# Autonomyx + AGenNext CodeReview Multi-Service Deployment Guide
 
 This guide covers deploying both the Autonomyx landing page and CodeReviewer service in a unified container environment.
 

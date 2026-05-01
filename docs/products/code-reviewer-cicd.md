@@ -1,4 +1,4 @@
-# CodeReviewer CI/CD and Automation
+# AGenNext CodeReview CI/CD and Automation
 
 ## CI workflow location
 - `.github/workflows/ci.yml`

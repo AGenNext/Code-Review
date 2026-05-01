@@ -1,4 +1,4 @@
-# CodeReviewer Deployment Policy
+# AGenNext CodeReview Deployment Policy
 
 ## Policy statement
 All deployments must be executed through approved CI/CD pipelines.

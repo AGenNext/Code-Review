@@ -179,7 +179,7 @@ gcloud run deploy autonomyx-landing \
 ### View Real-Time Logs
 
 ```bash
-# CodeReviewer logs
+# AGenNext CodeReview logs
 gcloud logs read "resource.labels.service_name=code-reviewer" --limit=50 --follow
 
 # Landing page logs

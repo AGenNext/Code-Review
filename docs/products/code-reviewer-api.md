@@ -1,4 +1,4 @@
-# CodeReviewer API Reference
+# AGenNext CodeReview API Reference
 
 Base runtime default: `http://localhost:8000` (systemd deployment on this VPS runs `http://127.0.0.1:8787`)
 
