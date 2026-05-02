@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from codereviewer.core.logic import summarize_findings
 from codereviewer.core.models import MemoryRecord, ReviewJob, ReviewJobStatus
 from codereviewer.infra.repositories import MemoryRepository, ReviewJobRepository, RuntimeProfileRepository
-from codereviewer.services.claude_agent_sdk import ClaudeAgentSDKReviewer
+from codereviewer.ports.review_runtime import ReviewRuntime
 from codereviewer.services.context_budget import ContextBudgetManager
 from codereviewer.services.notification_service import NotificationService, should_notify_for_status
 
@@ -14,7 +14,7 @@ class ReviewService:
         job_repo: ReviewJobRepository,
         profile_repo: RuntimeProfileRepository,
         memory_repo: MemoryRepository,
-        reviewer: ClaudeAgentSDKReviewer,
+        reviewer: ReviewRuntime,
         context_budget: ContextBudgetManager,
         notification_service: NotificationService | None = None,
     ) -> None:
@@ -47,7 +47,13 @@ class ReviewService:
             budget = min(profile.max_tokens * 4, 48_000)
             selected_chunks = self.context_budget.select_chunks(job.changes)
             compressed = [change.model_copy(update={"patch": chunk.content}) for change, chunk in zip(job.changes, selected_chunks, strict=False)]
-            findings = self.reviewer.analyze(compressed, profile=profile)
+            findings = self.reviewer.analyze(
+                compressed,
+                profile=profile,
+                tenant_id=job.tenant_id,
+                agent_id=job.agent_id,
+                run_id=job.id,
+            )
             job.findings = findings
             job.summary = summarize_findings(findings)
             job.status = ReviewJobStatus.completed
