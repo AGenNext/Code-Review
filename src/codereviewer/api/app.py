@@ -17,7 +17,8 @@ from codereviewer.infra.repositories import (
     RuntimeProfileRepository,
     SQLiteRepository,
 )
-from codereviewer.services.claude_agent_sdk import ClaudeAgentSDKReviewer
+from codereviewer.adapters.runtime.claude_agent_sdk import ClaudeAgentSDKReviewRuntime
+from codereviewer.adapters.runner.client import RunnerReviewRuntime
 from codereviewer.services.context_budget import ContextBudgetManager
 from codereviewer.services.feedback_service import FeedbackService
 from codereviewer.services.notification_service import NotificationService
@@ -41,11 +42,12 @@ profile_repo = RuntimeProfileRepository(storage)
 memory_repo = MemoryRepository(storage)
 feedback_repo = ReviewFeedbackRepository(storage)
 notification_service = NotificationService()
+runtime_adapter = RunnerReviewRuntime() if os.getenv("AGENNEXT_RUNNER_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"} else ClaudeAgentSDKReviewRuntime()
 review_service = ReviewService(
     job_repo,
     profile_repo,
     memory_repo,
-    ClaudeAgentSDKReviewer(),
+    runtime_adapter,
     ContextBudgetManager(),
     notification_service=notification_service,
 )
