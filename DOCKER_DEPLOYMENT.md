@@ -31,48 +31,16 @@ docker push agentnext/code-reviewer:v0.1.0
 ### 4. Verify push succeeded
 Visit: `https://hub.docker.com/r/agentnext/code-reviewer`
 
-## GitHub Actions Auto-Push (Recommended)
+## GitHub Actions Docker Hub Publish (Recommended)
 
-The repo already has CI/CD at `.github/workflows/ci.yml`. To add Docker push:
+The repository already publishes to Docker Hub from `.github/workflows/ci.yml` when changes land on `main` (and on version tags).
 
-**Edit `.github/workflows/ci.yml` and add:**
+You can also publish on demand from **Actions → CodeReviewer CI/CD → Run workflow** and keep `publish_image=true`.
 
-```yaml
-  docker-push:
-    runs-on: ubuntu-latest
-    needs: [test, package-build, container-build]
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+Required GitHub secrets:
+- `DOCKER_HUB_USERNAME` (for example `agentnext`)
+- `DOCKER_HUB_TOKEN` (Docker Hub PAT)
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./deploy/code-reviewer/Dockerfile
-          push: true
-          tags: |
-            agentnext/code-reviewer:latest
-            agentnext/code-reviewer:v0.1.0
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-```
-
-Then add GitHub Secrets:
-- `DOCKER_HUB_USERNAME`: `agentnext`
-- `DOCKER_HUB_TOKEN`: Your personal access token
 
 ## What Was Fixed
 
