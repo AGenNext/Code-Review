@@ -2,8 +2,15 @@ export type AgentCapability = "code_review" | "docs" | "refactor" | "test" | "de
 
 export type AgentTier = "free" | "pro" | "enterprise"
 
+export const CANONICAL_PREFIX = "copilot-hub"
+
+export function canonicalId(agentId: string): string {
+  return `${CANONICAL_PREFIX}:${agentId}`
+}
+
 export interface Agent {
   id: string
+  canonicalId: string
   name: string
   description: string
   icon: string
@@ -16,6 +23,7 @@ export interface Agent {
 
 export interface AgentSession {
   agentId: string
+  canonicalId: string
   sessionId: string
   messages: { role: string; content: string; timestamp: string }[]
   context: string[]
@@ -31,6 +39,7 @@ export const AGENT_TIERS: Record<AgentTier, { name: string; price: string; featu
 export const AGENTS: Agent[] = [
   {
     id: "code-review",
+    canonicalId: "copilot-hub:code-review",
     name: "Code Review",
     description: "Find bugs, security issues, and best practices",
     icon: "🔍",
@@ -42,6 +51,7 @@ export const AGENTS: Agent[] = [
   },
   {
     id: "docs",
+    canonicalId: "copilot-hub:docs",
     name: "Documentation",
     description: "Generate API docs, READMEs, and comments",
     icon: "📖",
@@ -53,6 +63,7 @@ export const AGENTS: Agent[] = [
   },
   {
     id: "refactor",
+    canonicalId: "copilot-hub:refactor",
     name: "Refactor",
     description: "Improve code design and structure",
     icon: "🔨",
@@ -64,6 +75,7 @@ export const AGENTS: Agent[] = [
   },
   {
     id: "test",
+    canonicalId: "copilot-hub:test",
     name: "Test",
     description: "Write unit tests, integration tests, and mocks",
     icon: "🧪",
@@ -75,6 +87,7 @@ export const AGENTS: Agent[] = [
   },
   {
     id: "debug",
+    canonicalId: "copilot-hub:debug",
     name: "Debug",
     description: "Debug errors and fix issues",
     icon: "🐛",
@@ -86,6 +99,7 @@ export const AGENTS: Agent[] = [
   },
   {
     id: "security",
+    canonicalId: "copilot-hub:security",
     name: "Security",
     description: "Security audit and vulnerability scanning",
     icon: "🛡️",
@@ -97,6 +111,7 @@ export const AGENTS: Agent[] = [
   },
   {
     id: "performance",
+    canonicalId: "copilot-hub:performance",
     name: "Performance",
     description: "Optimize code performance and bottlenecks",
     icon: "⚡",
@@ -108,6 +123,7 @@ export const AGENTS: Agent[] = [
   },
   {
     id: "architect",
+    canonicalId: "copilot-hub:architect",
     name: "Architect",
     description: "System design and architecture decisions",
     icon: "🏗️",
