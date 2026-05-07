@@ -1,116 +1,134 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Bot, Send, Code2, BookOpen, Hammer, FlaskConical, Bug, MessageCircle } from "lucide-react"
+import { Bot, Send, Code2, BookOpen, Hammer, FlaskConical, Bug, ChevronDown } from "lucide-react"
 
-type Message = {
-  role: "user" | "assistant"
-  content: string
-  agent?: string
-}
+type Message = { role: "user" | "assistant"; content: string; agent?: string }
 
 const agents = [
-  { name: "code-review", icon: Code2, description: "Review code for bugs and issues" },
-  { name: "docs", icon: BookOpen, description: "Create documentation" },
-  { name: "refactor", icon: Hammer, description: "Refactor and improve code" },
-  { name: "test", icon: FlaskConical, description: "Write tests" },
-  { name: "debug", icon: Bug, description: "Debug and fix issues" },
+  { id: "code-review", icon: Code2, color: "text-yellow-400", bg: "bg-yellow-400/10", label: "Code Review" },
+  { id: "docs", icon: BookOpen, color: "text-blue-400", bg: "bg-blue-400/10", label: "Documentation" },
+  { id: "refactor", icon: Hammer, color: "text-purple-400", bg: "bg-purple-400/10", label: "Refactor" },
+  { id: "test", icon: FlaskConical, color: "text-green-400", bg: "bg-green-400/10", label: "Testing" },
+  { id: "debug", icon: Bug, color: "text-red-400", bg: "bg-red-400/10", label: "Debug" },
 ]
 
 export default function AgentsPage() {
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
+  const [selected, setSelected] = useState<string | null>(null)
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hi! I'm your GitHub Copilot assistant. Select an agent and ask me anything! 🚀" }
+    { role: "assistant", content: "Welcome to CopilotHub. Select an agent and ask me anything." }
   ])
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
 
   const handleSend = () => {
     if (!input.trim()) return
-
-    const userMessage: Message = { role: "user", content: input }
-    setMessages(prev => [...prev, userMessage])
-
-    const agentPrefix = selectedAgent ? `@${selectedAgent} ` : ""
+    setMessages(p => [...p, { role: "user", content: input }])
     setTimeout(() => {
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: `Processing: "${agentPrefix}${input}"\n\nInvoking ${selectedAgent || "default"} agent...`,
-        agent: selectedAgent || undefined
+      setMessages(p => [...p, { 
+        role: "assistant", 
+        content: `Processing your request with @${selected || "default"}...`,
+        agent: selected || undefined 
       }])
     }, 500)
-
     setInput("")
   }
+
+  const currentAgent = agents.find(a => a.id === selected)
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-2">
-            <Bot className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-bold">GitHub Copilot Extension</h1>
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b border-border">
+        <div className="container px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Bot className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">CopilotHub</h1>
+              <p className="text-xs text-muted-foreground">AI-Powered Development</p>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
-        {/* Agent Pills */}
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground mb-3">Select agent:</p>
-          <div className="flex flex-wrap gap-2">
+      <main className="container px-4 py-6">
+        {/* Agent Selector */}
+        <div className="mb-8">
+          <p className="text-sm text-muted-foreground mb-4">Select your agent</p>
+          <div className="flex flex-wrap gap-3">
             {agents.map((agent) => (
-              <Button
-                key={agent.name}
-                variant={selectedAgent === agent.name ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedAgent(agent.name)}
-                className="gap-2"
+              <button
+                key={agent.id}
+                onClick={() => setSelected(agent.id)}
+                className={`flex items-center gap-3 px-5 py-3 rounded-xl border transition-all ${
+                  selected === agent.id 
+                    ? `border-primary ${agent.bg} ring-1 ring-primary` 
+                    : "border-border hover:border-primary/50"
+                }`}
               >
-                <agent.icon className="w-4 h-4" />
-                @{agent.name}
-              </Button>
+                <agent.icon className={`w-5 h-5 ${agent.color}`} />
+                <span className="font-medium">@{agent.id}</span>
+              </button>
             ))}
           </div>
         </div>
 
         {/* Chat */}
-        <div className="border rounded-lg bg-card">
-          <div className="border-b p-4">
-            <div className="flex items-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              <h2 className="font-semibold">Chat</h2>
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {currentAgent && (
+                <>
+                  <currentAgent.icon className={`w-5 h-5 ${currentAgent.color}`} />
+                  <div>
+                    <h2 className="font-semibold">{currentAgent.label}</h2>
+                    <p className="text-xs text-muted-foreground">@{selected}</p>
+                  </div>
+                </>
+              )}
             </div>
-            <p className="text-sm text-muted-foreground">
-              {selectedAgent ? `Using @${selectedAgent}` : "Using default agent"}
-            </p>
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
           </div>
 
           {/* Messages */}
-          <div className="p-4 space-y-4 min-h-[400px] max-h-[500px] overflow-y-auto">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-lg px-4 py-2 ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                  {msg.agent && <span className="text-xs text-muted-foreground block mb-1">@{msg.agent}</span>}
+          <div className="h-[500px] overflow-y-auto p-6 space-y-4">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[80%] rounded-2xl px-5 py-3 ${
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
+                }`}>
+                  {msg.agent && (
+                    <div className={`text-xs mb-1 opacity-70`}>@{msg.agent}</div>
+                  )}
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 </div>
               </div>
             ))}
+            <div ref={scrollRef} />
           </div>
 
           {/* Input */}
-          <div className="border-t p-4">
-            <div className="flex gap-2">
+          <div className="p-4 border-t border-border">
+            <div className="flex gap-3">
               <input
-                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                placeholder={`Ask ${selectedAgent ? `@${selectedAgent} ` : ""}...`}
+                className="flex-1 rounded-xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder={`Ask ${selected ? "@" + selected : ""}...`}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
               />
-              <Button onClick={handleSend} size="icon">
-                <Send className="w-4 h-4" />
+              <Button size="icon" onClick={handleSend} className="rounded-xl">
+                <Send className="w-5 h-5" />
               </Button>
             </div>
           </div>
