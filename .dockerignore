@@ -1,0 +1,30 @@
+# dependencies
+node_modules
+npm-debug.log
+
+# build
+.next
+out
+dist
+
+# misc
+.DS_Store
+*.pem
+.env*.local
+
+# debug
+npm-debug.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typecraft
+.turbo
+
+# next.js
+.next
+out
+build
