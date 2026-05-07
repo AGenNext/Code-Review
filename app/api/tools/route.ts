@@ -1,0 +1,16 @@
+import { NextResponse } from "next/server"
+
+const tools = [
+  { id: "read_file", name: "Read File", description: "Read contents of a file", parameters: { path: "string" } },
+  { id: "write_file", name: "Write File", description: "Write content to a file", parameters: { path: "string", content: "string" } },
+  { id: "search_code", name: "Search Code", description: "Search for code patterns", parameters: { query: "string" } },
+  { id: "execute_code", name: "Execute Code", description: "Execute code snippets", parameters: { code: "string" } },
+  { id: "execute_tests", name: "Execute Tests", description: "Run test suites", parameters: { test_path: "string" } },
+  { id: "list_files", name: "List Files", description: "List files in directory", parameters: { path: "string" } },
+  { id: "create_file", name: "Create File", description: "Create a new file", parameters: { path: "string", content: "string" } },
+  { id: "edit_file", name: "Edit File", description: "Edit file content", parameters: { path: "string", old: "string", new: "string" } },
+]
+
+export async function GET() {
+  return NextResponse.json(tools)
+}
