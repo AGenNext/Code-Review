@@ -1,25 +1,30 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, Suspense } from "react"
 import { Button } from "@/components/ui/button"
-import { Bot, Send, Code2, BookOpen, Hammer, FlaskConical, Bug, ChevronDown } from "lucide-react"
+import { Bot, Send, Code2, BookOpen, Hammer, FlaskConical, Bug, Shield, Zap, Building, ChevronDown, Lock, Plus } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 type Message = { role: "user" | "assistant"; content: string; agent?: string }
 
-const agents = [
-  { id: "code-review", icon: Code2, color: "text-yellow-400", bg: "bg-yellow-400/10", label: "Code Review" },
-  { id: "docs", icon: BookOpen, color: "text-blue-400", bg: "bg-blue-400/10", label: "Documentation" },
-  { id: "refactor", icon: Hammer, color: "text-purple-400", bg: "bg-purple-400/10", label: "Refactor" },
-  { id: "test", icon: FlaskConical, color: "text-green-400", bg: "bg-green-400/10", label: "Testing" },
-  { id: "debug", icon: Bug, color: "text-red-400", bg: "bg-red-400/10", label: "Debug" },
-]
+const agentDetails = {
+  "code-review": { icon: Code2, color: "text-yellow-400", bg: "bg-yellow-400/10", label: "Code Review", badge: "Free", lock: false },
+  "docs": { icon: BookOpen, color: "text-blue-400", bg: "bg-blue-400/10", label: "Documentation", badge: "Free", lock: false },
+  "refactor": { icon: Hammer, color: "text-purple-400", bg: "bg-purple-400/10", label: "Refactor", badge: "Free", lock: false },
+  "test": { icon: FlaskConical, color: "text-green-400", bg: "bg-green-400/10", label: "Testing", badge: "Free", lock: false },
+  "debug": { icon: Bug, color: "text-red-400", bg: "bg-red-400/10", label: "Debug", badge: "Free", lock: false },
+  "security": { icon: Shield, color: "text-orange-400", bg: "bg-orange-400/10", label: "Security", badge: "Pro", lock: true },
+  "performance": { icon: Zap, color: "text-cyan-400", bg: "bg-cyan-400/10", label: "Performance", badge: "Pro", lock: true },
+  "architect": { icon: Building, color: "text-pink-400", bg: "bg-pink-400/10", label: "Architect", badge: "Enterprise", lock: true },
+}
 
-export default function AgentsPage() {
-  const [selected, setSelected] = useState<string | null>(null)
+function AgentsContent() {
+  const searchParams = useSearchParams()
+  const initialAgent = searchParams.get("skill")
+  const [selected, setSelected] = useState<string | null>(initialAgent)
   const [input, setInput] = useState("")
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Welcome to CopilotHub. Select an agent and ask me anything." }
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
+  const [showAll, setShowAll] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -28,22 +33,24 @@ export default function AgentsPage() {
 
   const handleSend = () => {
     if (!input.trim()) return
-    setMessages(p => [...p, { role: "user", content: input }])
+    const userMsg: Message = { role: "user", content: input }
+    setMessages(p => [...p, userMsg])
+    
     setTimeout(() => {
       setMessages(p => [...p, { 
         role: "assistant", 
-        content: `Processing your request with @${selected || "default"}...`,
+        content: `Analyzing your request with @${selected || "default"} agent...\n\nI'll help you with: ${input}`,
         agent: selected || undefined 
       }])
-    }, 500)
+    }, 600)
     setInput("")
   }
 
-  const currentAgent = agents.find(a => a.id === selected)
+  const displayAgents = showAll ? Object.entries(agentDetails) : Object.entries(agentDetails).slice(0, 5)
+  const currentAgent = selected ? agentDetails[selected as keyof typeof agentDetails] : null
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b border-border">
         <div className="container px-4 py-4">
           <div className="flex items-center gap-3">
@@ -52,60 +59,79 @@ export default function AgentsPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold">CopilotHub</h1>
-              <p className="text-xs text-muted-foreground">AI-Powered Development</p>
+              <p className="text-xs text-muted-foreground">Select an agent to start</p>
             </div>
           </div>
         </div>
       </header>
 
       <main className="container px-4 py-6">
-        {/* Agent Selector */}
+        {/* Agent Grid */}
         <div className="mb-8">
-          <p className="text-sm text-muted-foreground mb-4">Select your agent</p>
-          <div className="flex flex-wrap gap-3">
-            {agents.map((agent) => (
-              <button
-                key={agent.id}
-                onClick={() => setSelected(agent.id)}
-                className={`flex items-center gap-3 px-5 py-3 rounded-xl border transition-all ${
-                  selected === agent.id 
-                    ? `border-primary ${agent.bg} ring-1 ring-primary` 
-                    : "border-border hover:border-primary/50"
-                }`}
-              >
-                <agent.icon className={`w-5 h-5 ${agent.color}`} />
-                <span className="font-medium">@{agent.id}</span>
-              </button>
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">Choose your AI agent</p>
+            <button onClick={() => setShowAll(!showAll)} className="text-sm text-primary hover:underline">
+              {showAll ? "Show less" : "Show all"}
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {displayAgents.map(([id, agent]) => {
+              const Icon = agent.icon
+              return (
+                <button
+                  key={id}
+                  onClick={() => setSelected(id)}
+                  disabled={agent.lock}
+                  className={`relative p-4 rounded-xl border transition-all ${
+                    selected === id 
+                      ? `border-primary ${agent.bg} ring-1 ring-primary` 
+                      : "border-border hover:border-primary/50"
+                  } ${agent.lock ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {agent.lock && (
+                    <Lock className="absolute top-2 right-2 w-4 h-4 text-muted-foreground" />
+                  )}
+                  <Icon className={`w-6 h-6 ${agent.color} mb-2`} />
+                  <div className="text-left">
+                    <p className="font-medium text-sm">@{id}</p>
+                    <p className="text-xs text-muted-foreground">{agent.label}</p>
+                  </div>
+                  <span className={`absolute bottom-2 right-2 text-xs px-1.5 py-0.5 rounded ${
+                    agent.badge === "Free" ? "bg-green-500/20 text-green-400" : "bg-primary/20 text-primary"
+                  }`}>
+                    {agent.badge}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {/* Chat */}
+        {/* Chat Interface */}
         <div className="rounded-2xl border border-border bg-card overflow-hidden">
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {currentAgent && (
-                <>
-                  <currentAgent.icon className={`w-5 h-5 ${currentAgent.color}`} />
-                  <div>
-                    <h2 className="font-semibold">{currentAgent.label}</h2>
-                    <p className="text-xs text-muted-foreground">@{selected}</p>
-                  </div>
-                </>
-              )}
+          <div className="px-6 py-4 border-b border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {currentAgent && (
+                  <>
+                    <currentAgent.icon className={`w-5 h-5 ${currentAgent.color}`} />
+                    <div>
+                      <h2 className="font-semibold">{currentAgent.label}</h2>
+                      <p className="text-xs text-muted-foreground">@{selected}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
             </div>
-            <ChevronDown className="w-5 h-5 text-muted-foreground" />
           </div>
 
-          {/* Messages */}
-          <div className="h-[500px] overflow-y-auto p-6 space-y-4">
+          <div className="h-[450px] overflow-y-auto p-6 space-y-4">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[80%] rounded-2xl px-5 py-3 ${
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                  msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                 }`}>
                   {msg.agent && (
                     <div className={`text-xs mb-1 opacity-70`}>@{msg.agent}</div>
@@ -114,10 +140,15 @@ export default function AgentsPage() {
                 </div>
               </div>
             ))}
+            {messages.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Select an agent and start chatting</p>
+              </div>
+            )}
             <div ref={scrollRef} />
           </div>
 
-          {/* Input */}
           <div className="p-4 border-t border-border">
             <div className="flex gap-3">
               <input
@@ -126,8 +157,9 @@ export default function AgentsPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                disabled={!selected}
               />
-              <Button size="icon" onClick={handleSend} className="rounded-xl">
+              <Button size="icon" onClick={handleSend} disabled={!selected || !input.trim()} className="rounded-xl">
                 <Send className="w-5 h-5" />
               </Button>
             </div>
@@ -135,5 +167,13 @@ export default function AgentsPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function AgentsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>}>
+      <AgentsContent />
+    </Suspense>
   )
 }
