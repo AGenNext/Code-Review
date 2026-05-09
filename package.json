@@ -1,0 +1,22 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "Landing page with SEO, API docs, Docker, and SSO support",
+  "main": "auth/server.js",
+  "scripts": {
+    "start": "node auth/server.js",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "docker:build": "docker build -t project .",
+    "docker:run": "docker run -p 8080:80 -e SSO_PROVIDER=github -e SSO_CLIENT_ID=$SSO_CLIENT_ID -e SSO_CLIENT_SECRET=$SSO_CLIENT_SECRET -e SESSION_SECRET=$SESSION_SECRET project",
+    "docker:start": "npm run docker:build && npm run docker:run",
+    "serve": "npx serve ."
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
