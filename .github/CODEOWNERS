@@ -1,0 +1,13 @@
+# CODEOWNERS - Require review before merge
+
+# Default reviewers for all code
+* @AGenNext/core
+
+# Python code
+*.py @AGenNext/core
+
+# JavaScript/TypeScript
+*.js *.ts *.jsx *.tsx @AGenNext/core
+
+# Workflows require extra review
+.github/ @AGenNext/core
