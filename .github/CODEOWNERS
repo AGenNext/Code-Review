@@ -1,4 +1,3 @@
 # CODEOWNERS
-
-# Add reviewers here
-# * @username
+# To enable code review requirement, uncomment below:
+# * @your-username
