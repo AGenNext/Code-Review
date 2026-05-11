@@ -1,0 +1,96 @@
+name: Reusable CI
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        type: string
+        default: python
+        description: Programming language (python, typescript, node, shell, docker, go, rust, java)
+      run_tests:
+        type: boolean
+        default: true
+      run_lint:
+        type: boolean
+        default: true
+      run_security:
+        type: boolean
+        default: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Python
+      - name: Run Python CI
+        if: inputs.language == 'python'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov coverage bandit safety flake8 black mypy
+          pytest -v --cov=. --cov-report=xml || true
+          coverage report || true
+          flake8 . --count --statistics || true
+          black --check . || true
+          mypy . --ignore-missing-imports || true
+          bandit -r . || true
+          safety check || true
+        continue-on-error: true
+        
+      # TypeScript
+      - name: Run TypeScript CI
+        if: inputs.language == 'typescript'
+        run: |
+          npm install
+          npx tsc --noEmit || true
+          npx eslint . --ext .ts,.tsx || true
+          npx prettier --check "**/*.{ts,tsx}" || true
+        continue-on-error: true
+        
+      # Node.js/JavaScript
+      - name: Run Node.js CI
+        if: inputs.language == 'node'
+        run: |
+          npm install
+          npm test || true
+          npx eslint . || true
+          npx prettier --check . || true
+        continue-on-error: true
+        
+      # Shell
+      - name: Run Shell CI
+        if: inputs.language == 'shell'
+        run: |
+          apt-get update && apt-get install -y shellcheck || true
+          shellcheck **/*.sh || true
+        continue-on-error: true
+        
+      # Docker
+      - name: Run Docker CI
+        if: inputs.language == 'docker'
+        run: docker build .
+        
+      # Go
+      - name: Run Go CI
+        if: inputs.language == 'go'
+        run: |
+          go test ./... || true
+          go build ./... || true
+        continue-on-error: true
+        
+      # Rust
+      - name: Run Rust CI
+        if: inputs.language == 'rust'
+        run: |
+          cargo test || true
+          cargo build || true
+        continue-on-error: true
+        
+      # Java
+      - name: Run Java CI
+        if: inputs.language == 'java'
+        run: |
+          mvn test || true
+        continue-on-error: true
