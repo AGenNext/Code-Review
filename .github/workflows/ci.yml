@@ -18,6 +18,7 @@ on:
 env:
   REGISTRY: docker.io
   IMAGE_NAME: agentnext/code-reviewer
+  LOCAL_IMAGE_NAME: agentnext/code-reviewer:ci
 
 jobs:
   test:
@@ -30,6 +31,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -50,6 +52,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Build package
         run: |
@@ -69,6 +72,30 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for smoke test
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/code-reviewer/Dockerfile
+          load: true
+          tags: ${{ env.LOCAL_IMAGE_NAME }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test container health endpoint
+        run: |
+          set -euo pipefail
+          container_id=$(docker run -d -p 8080:8080 --rm $LOCAL_IMAGE_NAME)
+          trap 'docker stop "$container_id"' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/healthz; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs "$container_id"
+          exit 1
 
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.publish_image)
