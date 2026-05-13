@@ -29,7 +29,15 @@ codereviewer = ["web/static/*.svg"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-addopts = "--cov=codereviewer --cov-report=term-missing --cov-fail-under=35"
+
+[tool.coverage.run]
+branch = true
+source = ["codereviewer"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 35
 
 [tool.ruff]
 target-version = "py311"
